@@ -1,0 +1,163 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  go-csv-txt-xsl
+
+Resources:
+  AppSyncServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - appsync.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: AllowAccessForAppsyncResolvers
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource: 
+                  - !GetAtt DB.Arn
+                  - !Sub 
+                    - "${Table}/index/*"
+                    - { Table: !GetAtt DB.Arn }
+
+  AppSyncApi:
+    DependsOn: AppSyncServiceRole
+    Type: AWS::AppSync::GraphQLApi
+    Description: "The GraphQL API for the single table App"
+    Properties:
+      Name: AppSyncTestAPI
+      AuthenticationType: API_KEY
+
+  # API Key for external access
+  AppSyncApiKey:
+    Type: AWS::AppSync::ApiKey
+    Properties: 
+      ApiId: !GetAtt AppSyncApi.ApiId
+
+
+  # AppSync Data Source for DynamoDB
+  AppSyncTableDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      Name: Tramas
+      ApiId: !GetAtt AppSyncApi.ApiId
+      Description: "The Single Table AppSync Data Source"
+      Type: AMAZON_DYNAMODB
+      ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
+      DynamoDBConfig:
+        TableName: !Ref DB
+        AwsRegion: !Sub ${AWS::Region}
+
+
+ ###############      
+ ## LOGS      ##
+ ###############  
+
+  TransformCSV:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/vendedlogs/states/${AWS::StackName}/transform-csv
+      RetentionInDays: 3
+
+  TransformTXT:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/vendedlogs/states/${AWS::StackName}/transform-txt
+      RetentionInDays: 3
+
+  TransformXSL:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/vendedlogs/states/${AWS::StackName}/transform-xsl
+      RetentionInDays: 3
+
+
+  # DynamoDB
+  DB:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Tramas
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: number
+          AttributeType: S        
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+        - AttributeName: number
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+
+# Functions
+  TransformCSVFunction:         
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/transform-csv
+      Handler: test-transform-csv
+      Runtime: go1.x
+      MemorySize: 2048 
+      Timeout: 300
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref DataBucket
+          TABLA_NAME: !Ref DB
+          REGION: !Sub ${AWS::Region}
+      Policies: 
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DB
+        - AWSLambdaBasicExecutionRole
+        - S3ReadPolicy:
+            BucketName: !Ref DataBucket
+      Events:
+        EBRule:
+          Type: EventBridgeRule
+          Properties:
+            InputPath: "$.detail"
+            Pattern:
+              detail:
+                bucket:
+                  name:
+                    - !Ref DataBucket                
+              detail-type:
+                - "Object Created"
+              source:
+                - aws.s3 
+
+
+ #############################
+ ## BUCKET                ####
+ #############################
+  DataBucket:
+    Type: AWS::S3::Bucket 
+    Properties:  
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+          EventBridgeEnabled: True 
+
+
+Outputs:
+  APIKey:
+    Description: API Key
+    Value: !GetAtt AppSyncApiKey.ApiKey
+  GraphQLApiEndpoint:
+    Description: The URL to the GraphQL Endpoint
+    Value: !GetAtt AppSyncApi.GraphQLUrl
+  GraphQLApiId:
+    Description: The API ID of the GraphQL API
+    Value: !GetAtt AppSyncApi.ApiId         

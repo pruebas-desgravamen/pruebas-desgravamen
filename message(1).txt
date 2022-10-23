@@ -1,0 +1,152 @@
+package main
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/s3"
+)
+
+type Sdn struct {
+	Id           string `json:"id"`
+	Sort         string `json:"sort"`
+	Ent_num      int    `json:"entNum"`
+	CreationDate string `json:"creationDate"`
+	SDN_Name     string `json:"sdnName"`
+	SDN_Type     string `json:"sdnType"`
+	Program      string `json:"program"`
+	Title        string `json:"title"`
+	Call_Sign    string `json:"callSign"`
+	Vess_type    string `json:"vesstype"`
+	Tonnage      string `json:"tonnage"`
+	GRT          string `json:"grt"`
+	Vess_flag    string `json:"vessflag"`
+	Vess_owner   string `json:"vessowner"`
+	Remarks      string `json:"remarks"`
+}
+
+type Iobject struct {
+	Key       string `json:"key"`
+	Etag      string `json:"etag"`
+	Sequencer string `json:"sequencer"`
+}
+
+type Evento struct {
+	Object Iobject `json:"object"`
+}
+
+func Handler(ctx context.Context, ev Evento) (string, error) {
+
+	var TABLE_NAME = os.Getenv("TABLA_NAME")
+	var BUCKET_NAME = os.Getenv("BUCKET_NAME")
+	var OBJECT_NAME = ev.Object.Key
+	var sdn Sdn
+
+	//Iniciar sesion en aws
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String(os.Getenv("us-east-1"))},
+	)
+	if err != nil {
+		fmt.Println(err.Error())
+		return "", err
+	}
+
+	svcDynamo := dynamodb.New(sess) // Dynamodb
+	svcS3 := s3.New(sess)           // s3
+
+	file, err := svcS3.GetObject(
+		&s3.GetObjectInput{
+			Bucket: aws.String(BUCKET_NAME),
+			Key:    aws.String(OBJECT_NAME),
+		})
+	if err != nil {
+		fmt.Println(err.Error())
+		return "", err
+	}
+
+	buff := new(bytes.Buffer)
+	buff.ReadFrom(file.Body)
+	result := buff.String()
+
+	reqBody := strings.Split(result, "\n")
+	timeNow := time.Now().Format(time.RFC3339)
+
+	for i, _ := range reqBody {
+		// reemplazar -0- por vacio, eliminar \n
+		reqBody[i] = strings.Replace(reqBody[i], "-0- ", "", -1)
+		reqBody[i] = strings.TrimRight(reqBody[i], "\r\n")
+
+		singleData := strings.Split(reqBody[i], ",")
+		if len(singleData) == 12 {
+			// convertir a int
+			entNum, err := strconv.Atoi(singleData[0])
+			if err != nil {
+				fmt.Println(err.Error())
+				return "", err
+			}
+
+			sdn = Sdn{
+				Id:           "SDN#" + strings.Split(timeNow, "T")[0],
+				Sort:         strings.Trim(singleData[0], "\""),
+				Ent_num:      entNum,
+				CreationDate: timeNow,
+				SDN_Name:     strings.Trim(singleData[1], "\""),
+				SDN_Type:     strings.Trim(singleData[2], "\""),
+				Program:      strings.Trim(singleData[3], "\""),
+				Title:        strings.Trim(singleData[4], "\""),
+				Call_Sign:    strings.Trim(singleData[5], "\""),
+				Vess_type:    strings.Trim(singleData[6], "\""),
+				Tonnage:      strings.Trim(singleData[7], "\""),
+				GRT:          strings.Trim(singleData[8], "\""),
+				Vess_flag:    strings.Trim(singleData[9], "\""),
+				Vess_owner:   strings.Trim(singleData[10], "\""),
+				Remarks:      strings.Trim(singleData[11], "\""),
+			}
+			data, err := MarshalMap(sdn)
+			if err != nil {
+				fmt.Println(err.Error())
+				return "", err
+			}
+			params := &dynamodb.PutItemInput{
+				Item:      data,
+				TableName: aws.String(TABLE_NAME),
+			}
+			_, err2 := svcDynamo.PutItem(params)
+			if err2 != nil {
+				fmt.Println(err2.Error())
+				return "", err2
+			}
+		}
+	}
+	result = "Sucess"
+	return result, nil
+}
+
+func main() {
+	lambda.Start(Handler)
+}
+
+func MarshalMap(in interface{}) (map[string]*dynamodb.AttributeValue, error) {
+	av, err := getEncoder().Encode(in)
+	if err != nil || av == nil || av.M == nil {
+		return map[string]*dynamodb.AttributeValue{}, err
+	}
+
+	return av.M, nil
+}
+
+func getEncoder() *dynamodbattribute.Encoder {
+	encoder := dynamodbattribute.NewEncoder()
+	encoder.NullEmptyString = false
+	return encoder
+}
