@@ -1,0 +1,20 @@
+{
+  "Comment": "Upload File",
+  "StartAt": "Save Info",
+  "States": {
+    "Save Info":{
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:putItem",
+      "Parameters": {
+        "TableName": "${TableName}",
+        "Item":{
+          "pk": "TRAMA",
+          "sk": {
+            "S.$": "$$.Execution.Input.input.nPolicy"
+          }
+        }
+      },
+      "End": true
+    }
+  }
+}

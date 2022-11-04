@@ -1,0 +1,22 @@
+input UploadFileInput {
+  # numero de poliza
+  nPolicy: String
+  # codigo del usuario que hace el registro
+  userCode: String
+  # canal
+  canal: String
+}
+
+
+type Mutation {
+  uploadFile(input: UploadFileInput): String
+}
+
+type Query{
+  get(input: String): String
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+}

@@ -23,6 +23,11 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
+                  - states:StartSyncExecution #Type: Express
+                Resource:
+                  - !Ref UploadFileStateMachine
+              - Effect: Allow
+                Action:
                   - dynamodb:GetItem
                   - dynamodb:PutItem
                   - dynamodb:DeleteItem
@@ -49,6 +54,12 @@ Resources:
     Properties: 
       ApiId: !GetAtt AppSyncApi.ApiId
 
+  # AppSync Schema
+  AppSyncSchema:
+    Type: AWS::AppSync::GraphQLSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      DefinitionS3Location: "./schema.graphql"
 
   # AppSync Data Source for DynamoDB
   AppSyncTableDataSource:
@@ -63,6 +74,76 @@ Resources:
         TableName: !Ref DB
         AwsRegion: !Sub ${AWS::Region}
 
+   # AppSync Data Source for StepFunction
+  StepFunctionsHttpDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      Name: StepFunctionsHttpDataSource
+      Description: Step Functions HTTP
+      Type: HTTP
+      ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
+      HttpConfig:
+        Endpoint: !Sub https://sync-states.${AWS::Region}.amazonaws.com/
+        AuthorizationConfig:
+          AuthorizationType: AWS_IAM
+          AwsIamConfig:
+            SigningRegion: !Ref AWS::Region
+            SigningServiceName: states
+
+
+ ###############      
+ ## RESOLVERS ##
+ ###############  
+
+  UploadFileResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Mutation
+      FieldName: uploadFile
+      DataSourceName: !GetAtt StepFunctionsHttpDataSource.Name
+      RequestMappingTemplate: !Sub >
+        {
+          "version": "2018-05-29",
+          "method": "POST",
+          "resourcePath": "/",
+          "params": {
+            "headers": {
+              "content-type": "application/x-amz-json-1.0",
+              "x-amz-target":"AWSStepFunctions.StartSyncExecution"
+            },
+            "body": {
+              "stateMachineArn": "${UploadFileStateMachine}",
+              "input": "{ \"input\": $util.escapeJavaScript($util.toJson($ctx.args.input))}"
+            }
+          }
+        }
+      ResponseMappingTemplate: $ctx.result.body
+
+ ###################      
+ ## STATEMACHINES ##
+ ###################
+  UploadFileStateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      DefinitionUri: statemachines/upload_file.asl.json
+      Type: EXPRESS
+      Name: desg-upload-file
+      DefinitionSubstitutions:  
+        TableName: !Ref DB
+      Logging:
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt UploadFileLogs.Arn
+        IncludeExecutionData: true
+        Level: ALL  
+      Policies: 
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DB 
+        - CloudWatchLogsFullAccess
+
 
  ###############      
  ## LOGS      ##
@@ -74,17 +155,18 @@ Resources:
       LogGroupName: !Sub /aws/vendedlogs/states/${AWS::StackName}/transform-csv
       RetentionInDays: 3
 
-  TransformTXT:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub /aws/vendedlogs/states/${AWS::StackName}/transform-txt
-      RetentionInDays: 3
-
   TransformXSL:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub /aws/vendedlogs/states/${AWS::StackName}/transform-xsl
       RetentionInDays: 3
+  
+  UploadFileLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/vendedlogs/states/${AWS::StackName}/upload-file
+      RetentionInDays: 3
+
 
 
   # DynamoDB
