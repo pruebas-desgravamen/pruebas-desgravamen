@@ -4,15 +4,18 @@
   "States": {
     "Save Info":{
       "Type": "Task",
-      "Resource": "arn:aws:states:::dynamodb:putItem",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
       "Parameters": {
         "TableName": "${TableName}",
-        "Item":{
-          "pk": "TRAMA",
+        "Key":{
+          "pk": {
+            "S": "TRAMA"
+          },
           "sk": {
             "S.$": "$$.Execution.Input.input.nPolicy"
           }
-        }
+        },
+        "ReturnValues": "ALL_NEW"
       },
       "End": true
     }

@@ -175,14 +175,14 @@ Resources:
     Properties:
       TableName: Tramas
       AttributeDefinitions:
-        - AttributeName: id
+        - AttributeName: pk
           AttributeType: S
-        - AttributeName: number
+        - AttributeName: sk
           AttributeType: S        
       KeySchema:
-        - AttributeName: id
+        - AttributeName: pk
           KeyType: HASH
-        - AttributeName: number
+        - AttributeName: sk
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
 
