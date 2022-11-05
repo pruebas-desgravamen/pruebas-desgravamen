@@ -255,6 +255,24 @@ Resources:
               source:
                 - aws.s3 
 
+  InFunction:         
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/in
+      Handler: test-in
+      Runtime: go1.x
+      MemorySize: 2048 
+      Timeout: 300
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref DataBucket
+          REGION: !Sub ${AWS::Region}
+      Policies: 
+        - AWSLambdaBasicExecutionRole
+        - S3WritePolicy:
+            BucketName: !Ref DataBucket
+
+
  #############################
  ## BUCKET                ####
  #############################
@@ -264,6 +282,7 @@ Resources:
       NotificationConfiguration:
         EventBridgeConfiguration:
           EventBridgeEnabled: True 
+
 
 
 Outputs:
