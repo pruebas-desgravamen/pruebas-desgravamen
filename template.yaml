@@ -255,6 +255,38 @@ Resources:
               source:
                 - aws.s3 
 
+  GagaFunction:         
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/gaga
+      Handler: test-gaga
+      Runtime: go1.x
+      MemorySize: 2048 
+      Timeout: 300
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref DataBucket
+          REGION: !Sub ${AWS::Region}
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - S3ReadPolicy:
+            BucketName: !Ref DataBucket
+      Events:
+        EBRule:
+          Type: EventBridgeRule
+          Properties:
+            InputPath: "$.detail"
+            Pattern:
+              detail:
+                bucket:
+                  name:
+                    - !Ref DataBucket                
+              detail-type:
+                - "Object Created"
+              source:
+                - aws.s3 
+
+
   InFunction:         
     Type: AWS::Serverless::Function
     Properties:
