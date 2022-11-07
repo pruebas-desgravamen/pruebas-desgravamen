@@ -1,13 +1,14 @@
 package main
 
 import (
-	"context"
+	"fmt"
 	"os"
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 )
 
 func handler() (string, error) {
@@ -15,52 +16,33 @@ func handler() (string, error) {
 	var BUCKET_NAME = os.Getenv("BUCKET_NAME")
 
 	//Iniciar sesion en aws
-	// sess, err := session.NewSession(&aws.Config{
-	// 	Region: aws.String(os.Getenv("us-east-1"))},
-	// )
-	// if err != nil {
-	// 	fmt.Println(err.Error())
-	// 	return "", nil
-	// }
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String(os.Getenv("us-east-1"))},
+	)
+	if err != nil {
+		fmt.Println(err.Error())
+		return "", nil
+	}
 
-	svc := s3.New(s3.Options{
-		Region: os.Getenv("us-east-1"),
-	})
+	svc := s3.New(sess) // s3
 
-	presignClient := s3.NewPresignClient(svc)
 	// Prepare the S3 request so a signature can be generated
 
-	// r, _ := svc.PutObjectRequest(&s3.PutObjectInput{
-	// 	Bucket: aws.String(BUCKET_NAME),
-	// 	Key:    aws.String("1050135.jpg"),
-	// })
-
-	presignParams := &s3.PutObjectInput{
+	r, _ := svc.PutObjectRequest(&s3.PutObjectInput{
 		Bucket: aws.String(BUCKET_NAME),
-		Key:    aws.String("1050135.jpg"),
-	}
+		Key:    aws.String("README.md"),
+	})
 
-	presignDuration := func(po *s3.PresignOptions) {
-		po.Expires = 5 * time.Minute
-	}
-
-	presignResult, err := presignClient.PresignPutObject(context.TODO(), presignParams, presignDuration)
-
+	// Create the pre-signed url with an expiry
+	url, err := r.Presign(15 * time.Minute)
 	if err != nil {
-		panic("Couldn't get presigned URL for GetObject")
+		fmt.Println("Failed to generate a pre-signed url: ", err)
+		return "", nil
 	}
-	// // Create the pre-signed url with an expiry
-	// url, err := r.Presign(15 * time.Minute)
-	// if err != nil {
-	// 	fmt.Println("Failed to generate a pre-signed url: ", err)
-	// 	return "", nil
-	// }
 
-	// // Display the pre-signed url
-	// fmt.Println("Pre-signed URL", url)
-	// return url, nil
-
-	return presignResult.URL, nil
+	// Display the pre-signed url
+	fmt.Println("Pre-signed URL", url)
+	return url, nil
 }
 
 func main() {
