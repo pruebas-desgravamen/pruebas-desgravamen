@@ -269,7 +269,7 @@ Resources:
           REGION: !Sub ${AWS::Region}
       Policies: 
         - AWSLambdaBasicExecutionRole
-        - S3WritePolicy:
+        - S3CrudPolicy:
             BucketName: !Ref DataBucket
 
 
@@ -282,6 +282,16 @@ Resources:
       NotificationConfiguration:
         EventBridgeConfiguration:
           EventBridgeEnabled: True 
+      CorsConfiguration:
+          CorsRules:
+            - AllowedOrigins:
+                - '*'
+              AllowedHeaders:
+                - '*'
+              AllowedMethods:
+                - GET
+                - PUT
+              MaxAge: 3000 
 
 
 
