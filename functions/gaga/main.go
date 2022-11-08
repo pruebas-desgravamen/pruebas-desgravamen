@@ -27,6 +27,7 @@ type Evento struct {
 type Response struct {
 	Asegurados int     `json:"asegurados"`
 	Monto      float64 `json:"monto"`
+	Moneda     string  `json:"moneda"`
 }
 
 func Handler(ctx context.Context, ev Evento) (Response, error) {
@@ -58,9 +59,6 @@ func Handler(ctx context.Context, ev Evento) (Response, error) {
 
 	result, _ := OpenFile(*file)
 
-	// cell1 := result.GetCellValue("Sheet1", "A1")
-	// cell2 := result.GetCellValue("Sheet1", "B1")
-
 	rows := result.GetRows("Sheet1")
 
 	var monto []float64
@@ -75,9 +73,18 @@ func Handler(ctx context.Context, ev Evento) (Response, error) {
 		montoTotal += numb
 	}
 
+	// verificar que la moneda sea la misma
+	for i := 1; i <= len((rows))-1; i++ {
+		if rows[i][16] != "SOLES" {
+			return Response{}, nil
+		}
+	}
+	moneda := rows[1][16]
+
 	response := Response{
 		Asegurados: len((rows)) - 1,
 		Monto:      montoTotal,
+		Moneda:     moneda,
 	}
 
 	fmt.Println(response)
