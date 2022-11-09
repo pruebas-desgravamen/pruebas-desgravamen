@@ -39,6 +39,11 @@ Resources:
                   - !Sub 
                     - "${Table}/index/*"
                     - { Table: !GetAtt DB.Arn }
+              - Effect: Allow
+                Action:
+                - lambda:invokeFunction
+                Resource: 
+                  - !GetAtt FirstServCargaFunction.Arn
 
   AppSyncApi:
     DependsOn: AppSyncServiceRole
@@ -90,11 +95,41 @@ Resources:
           AwsIamConfig:
             SigningRegion: !Ref AWS::Region
             SigningServiceName: states
+ ###############      
+ ## DATA SOURCE ##
+ ###############  
 
+  FirstServCargaDataSource: 
+    Type: "AWS::AppSync::DataSource"
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      Name: FirstServCargaDataSource
+      Type: AWS_LAMBDA
+      ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
+      LambdaConfig:
+        LambdaFunctionArn: !GetAtt FirstServCargaFunction.Arn
 
  ###############      
  ## RESOLVERS ##
  ###############  
+
+   # Resolver: Mutation - resendInvitation
+  FirstServCargaResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Mutation
+      FieldName: firstServCarga
+      DataSourceName: !GetAtt FirstServCargaDataSource.Name
+      RequestMappingTemplate: !Sub >
+        {
+          "version": "2017-02-28",
+          "operation": "Invoke",
+          "payload": {
+            "input": $utils.toJson($context.args.input)
+          }
+        }
+      ResponseMappingTemplate: $util.toJson($context.result)
 
   UploadFileResolver:
     Type: AWS::AppSync::Resolver
@@ -303,6 +338,21 @@ Resources:
         - AWSLambdaBasicExecutionRole
         - S3CrudPolicy:
             BucketName: !Ref DataBucket
+
+  FirstServCargaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/first-serv-carga
+      Handler: test-first-serve-carga
+      Runtime: go1.x
+      MemorySize: 128    
+      Timeout: 5
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DB
+      Environment:
+        Variables:
+          DB: !Ref DB
 
 
  #############################

@@ -12,7 +12,7 @@
             "S": "TRAMA"
           },
           "sk": {
-            "S.$": "States.Format('{}#{}', $$.Execution.Input.input.nPolicy, $$.Execution.Input.input.canal)"
+            "S.$": "States.Format('{}#{}', $$.Execution.Input.input.poliza, $$.Execution.Input.input.canalDeVenta)"
           }
         },
         "ReturnValues": "ALL_NEW"
