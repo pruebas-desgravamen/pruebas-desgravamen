@@ -10,12 +10,12 @@ enum Transaccion {
   PAGOS
 }
 
-input Date{
-  month: String
-  year: String
-}
+# input Date{
+#   month: String
+#   year: String
+# }
 
-input UploadFileInput {
+input InputCargaDashboard {
   tipo: Tipo
   # numero de poliza
   poliza: String
@@ -29,25 +29,48 @@ input UploadFileInput {
   transaccion: Transaccion
   # periodo de declaracion
   #periodoDeclaracion: Date
-    # periodo de declaracion
+  # periodo de declaracion
   periodoDeclaracion: String
   # RUC
   ruc: String
   # codigo del usuario que hace el registro
   userCode: String
-
-
 }
 
+type CargaDashboard {
+  tipo: Tipo
+  # numero de poliza
+  poliza: String
+  # contratante
+  contratante: String
+  # producto: esta bloqueado 
+  producto: String
+  # canalDeVenta esta bloqueado
+  canalDeVenta: String
+  # transaccion
+  transaccion: Transaccion
+  # periodo de declaracion
+  # periodoDeclaracion: Date
+  # periodo de declaracion
+  periodoDeclaracion: String
+  # RUC
+  ruc: String
+  # codigo del usuario que hace el registro
+  userCode: String
+}
+
+type ShowDashboardOutput{
+  cargas:  [CargaDashboard]
+  nextToken: String
+}
 
 type Mutation {
-  uploadFile(input: UploadFileInput): String
-  firstServCarga(input: UploadFileInput): String
-
+  uploadFile(input: InputCargaDashboard): String
+  firstServCarga(input: InputCargaDashboard): String
 }
 
 type Query{
-  get(input: String): String
+  showDashboard: ShowDashboardOutput
 }
 
 schema {

@@ -116,6 +116,7 @@ Resources:
    # Resolver: Mutation - resendInvitation
   FirstServCargaResolver:
     Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
     Properties:
       ApiId: !GetAtt AppSyncApi.ApiId
       TypeName: Mutation
@@ -130,6 +131,46 @@ Resources:
           }
         }
       ResponseMappingTemplate: $util.toJson($context.result)
+
+  ShowDashboardResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Query
+      FieldName: showDashboard
+      DataSourceName: !GetAtt AppSyncTableDataSource.Name
+      RequestMappingTemplate: >
+        {
+          "version": "2017-02-28",
+          "operation": "Query",
+          "query": {
+            "expression": "pk = :pk",
+            "expressionValues":	{              
+        	    ":pk" : $util.dynamodb.toDynamoDBJson("TRAMA")
+            }
+          }
+        }
+      ResponseMappingTemplate: >
+        {
+          "cargas": [
+            #foreach($item in $ctx.result.items) {
+              "tipo": $util.toJson($item['tipo']),
+              "poliza": $util.toJson($item['poliza']),                           
+              "contratante": $util.toJson($item['contratante']),      
+              "producto": $util.toJson($item['producto']),         
+              "canalDeVenta": $util.toJson($item['canalDeVenta']),                           
+              "transaccion": $util.toJson($item['transaccion']),                           
+              "periodoDeclaracion": $util.toJson($item['periodoDeclaracion']),                           
+              "ruc": $util.toJson($item['ruc']),                           
+              "userCode": $util.toJson($item['userCode'])
+            }
+            #if($foreach.hasNext),#end
+            #end
+          ],
+          "nextToken": $util.toJson($ctx.result.nextToken)
+        }
+
 
   UploadFileResolver:
     Type: AWS::AppSync::Resolver
