@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -11,7 +12,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-func handler() (string, error) {
+type Event struct {
+	FileName string `json:"filename"`
+}
+
+func handler(ctx context.Context, event Event) (string, error) {
 
 	var BUCKET_NAME = os.Getenv("BUCKET_NAME")
 
@@ -30,7 +35,7 @@ func handler() (string, error) {
 
 	r, _ := svc.PutObjectRequest(&s3.PutObjectInput{
 		Bucket: aws.String(BUCKET_NAME),
-		Key:    aws.String("README.md"),
+		Key:    aws.String(event.FileName),
 	})
 
 	// Create the pre-signed url with an expiry

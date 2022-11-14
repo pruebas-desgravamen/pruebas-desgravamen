@@ -65,7 +65,7 @@ type ShowDashboardOutput{
 }
 
 type Mutation {
-  uploadFile(input: InputCargaDashboard): String
+  uploadFile(input: InputCargaDashboard, filename: String): String
   firstServCarga(input: InputCargaDashboard): String
 }
 

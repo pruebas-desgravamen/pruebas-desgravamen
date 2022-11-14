@@ -202,7 +202,7 @@ Resources:
             },
             "body": {
               "stateMachineArn": "${UploadFileStateMachine}",
-              "input": "{ \"input\": $util.escapeJavaScript($util.toJson($ctx.args.input))}"
+              "input": "{ \"input\": $util.escapeJavaScript($util.toJson($ctx.args.input)), \"filename\": $util.escapeJavaScript($util.toJson($ctx.args.filename))}"
             }
           }
         }
