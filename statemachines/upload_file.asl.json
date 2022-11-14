@@ -3,19 +3,39 @@
   "StartAt": "Save Info",
   "States": {
     "Save Info":{
-      "Type": "Task",
-      "Resource": "arn:aws:states:::dynamodb:updateItem",
-      "Parameters": {
-        "TableName": "${TableName}",
-        "Key":{
-          "pk": {
-            "S": "TRAMA"
-          },
-          "sk": {
-            "S.$": "States.Format('{}#{}', $$.Execution.Input.input.poliza, $$.Execution.Input.input.canalDeVenta)"
+      "Type": "Parallel",
+      "Next": "Send URL",
+      "Branches": [
+        {
+          "StartAt": "Save registry to Dynamo",
+          "States": {
+            "Save registry to Dynamo":{
+              "Type": "Task",
+              "Parameters": {
+                "input.$" : "$$.Execution.Input.input"
+            },
+              "Resource": "${FirstServCargaFunctionArn}",
+              "End": true
+            }
           }
         },
-        "ReturnValues": "ALL_NEW"
+        {
+          "StartAt": "Subtract",
+          "States": {
+            "Subtract": {
+              "Type": "Task",
+              "Resource": "${InFunctionArn}",
+              "OutputPath": "$",
+              "End": true
+            }
+          }
+        }
+      ]
+    },
+    "Send URL":{
+      "Type": "Pass",
+      "Parameters":{
+        "url.$": "$"
       },
       "End": true
     }

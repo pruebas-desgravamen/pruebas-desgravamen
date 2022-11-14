@@ -99,38 +99,48 @@ Resources:
  ## DATA SOURCE ##
  ###############  
 
-  FirstServCargaDataSource: 
-    Type: "AWS::AppSync::DataSource"
-    Properties:
-      ApiId: !GetAtt AppSyncApi.ApiId
-      Name: FirstServCargaDataSource
-      Type: AWS_LAMBDA
-      ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
-      LambdaConfig:
-        LambdaFunctionArn: !GetAtt FirstServCargaFunction.Arn
+  # FirstServCargaDataSource: 
+  #   Type: "AWS::AppSync::DataSource"
+  #   Properties:
+  #     ApiId: !GetAtt AppSyncApi.ApiId
+  #     Name: FirstServCargaDataSource
+  #     Type: AWS_LAMBDA
+  #     ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
+  #     LambdaConfig:
+  #       LambdaFunctionArn: !GetAtt FirstServCargaFunction.Arn
+
+  # InDataSource: 
+  #   Type: "AWS::AppSync::DataSource"
+  #   Properties:
+  #     ApiId: !GetAtt AppSyncApi.ApiId
+  #     Name: InDataSource
+  #     Type: AWS_LAMBDA
+  #     ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
+  #     LambdaConfig:
+  #       LambdaFunctionArn: !GetAtt InFunction.Arn
 
  ###############      
  ## RESOLVERS ##
  ###############  
 
-   # Resolver: Mutation - resendInvitation
-  FirstServCargaResolver:
-    Type: AWS::AppSync::Resolver
-    DependsOn: AppSyncSchema
-    Properties:
-      ApiId: !GetAtt AppSyncApi.ApiId
-      TypeName: Mutation
-      FieldName: firstServCarga
-      DataSourceName: !GetAtt FirstServCargaDataSource.Name
-      RequestMappingTemplate: !Sub >
-        {
-          "version": "2017-02-28",
-          "operation": "Invoke",
-          "payload": {
-            "input": $utils.toJson($context.args.input)
-          }
-        }
-      ResponseMappingTemplate: $util.toJson($context.result)
+  #  # Resolver: Mutation - resendInvitation
+  # FirstServCargaResolver:
+  #   Type: AWS::AppSync::Resolver
+  #   DependsOn: AppSyncSchema
+  #   Properties:
+  #     ApiId: !GetAtt AppSyncApi.ApiId
+  #     TypeName: Mutation
+  #     FieldName: firstServCarga
+  #     DataSourceName: !GetAtt FirstServCargaDataSource.Name
+  #     RequestMappingTemplate: !Sub >
+  #       {
+  #         "version": "2017-02-28",
+  #         "operation": "Invoke",
+  #         "payload": {
+  #           "input": $utils.toJson($context.args.input)
+  #         }
+  #       }
+  #     ResponseMappingTemplate: $util.toJson($context.result)
 
   ShowDashboardResolver:
     Type: AWS::AppSync::Resolver
@@ -196,7 +206,7 @@ Resources:
             }
           }
         }
-      ResponseMappingTemplate: $ctx.result.body
+      ResponseMappingTemplate: $util.parseJson($ctx.result.body).output
 
  ###################      
  ## STATEMACHINES ##
@@ -209,13 +219,19 @@ Resources:
       Name: desg-upload-file
       DefinitionSubstitutions:  
         TableName: !Ref DB
+        FirstServCargaFunctionArn: !GetAtt FirstServCargaFunction.Arn
+        InFunctionArn: !GetAtt InFunction.Arn
       Logging:
         Destinations:
           - CloudWatchLogsLogGroup:
               LogGroupArn: !GetAtt UploadFileLogs.Arn
         IncludeExecutionData: true
         Level: ALL  
-      Policies: 
+      Policies:
+        - LambdaInvokePolicy:
+            FunctionName: !Ref FirstServCargaFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref InFunction
         - DynamoDBCrudPolicy:
             TableName: !Ref DB 
         - CloudWatchLogsFullAccess

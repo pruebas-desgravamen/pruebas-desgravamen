@@ -41,7 +41,7 @@ func handler() (string, error) {
 	}
 
 	// Display the pre-signed url
-	fmt.Println("Pre-signed URL", url)
+	// fmt.Println("Pre-signed URL", url)
 	return url, nil
 }
 

@@ -72,7 +72,6 @@ func handler(ctx context.Context, event Input) (string, error) {
 	item, err := MarshalMap(carga)
 	if err != nil {
 		fmt.Println("error on marshal")
-
 		return "Error on marshal", err
 	}
 
