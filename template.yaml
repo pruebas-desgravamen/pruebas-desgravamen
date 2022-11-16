@@ -278,6 +278,22 @@ Resources:
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
 
+  DBTramas:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: DBTramas
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+
 # Functions
   TransformCSVFunction:         
     Type: AWS::Serverless::Function
@@ -324,11 +340,11 @@ Resources:
       Environment:
         Variables:
           BUCKET_NAME: !Ref DataBucket
-          TABLA_NAME: !Ref DB
+          TABLA_NAME: !Ref DBTramas
           REGION: !Sub ${AWS::Region}
       Policies: 
         - DynamoDBCrudPolicy:
-            TableName: !Ref DB
+            TableName: !Ref DBTramas
         - AWSLambdaBasicExecutionRole
         - S3ReadPolicy:
             BucketName: !Ref DataBucket

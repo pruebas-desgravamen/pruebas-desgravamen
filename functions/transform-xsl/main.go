@@ -15,10 +15,24 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-type Sdn struct {
-	Id       string `json:"id"`
-	Number   string `json:"number"`
-	Footnote string `json:"footnote"`
+type Cliente struct {
+	PK     string `json:"pk"`
+	Sk     string `json:"sk"`
+	TIdDoc string `json:"tIdDoc"`
+	NIdDoc string `json:"nIdDoc"`
+	Name   string `json:"name"`
+}
+
+type Credito struct {
+	PK       string `json:"pk"`
+	Sk       string `json:"sk"`
+	Currency string `json:"currency"`
+}
+
+type Certificado struct {
+	PK    string `json:"pk"`
+	Sk    string `json:"sk"`
+	Prime string `json:"Prime"`
 }
 
 type Iobject struct {
@@ -36,7 +50,9 @@ func Handler(ctx context.Context, ev Evento) (string, error) {
 	var TABLE_NAME = os.Getenv("TABLA_NAME")
 	var BUCKET_NAME = os.Getenv("BUCKET_NAME")
 	var OBJECT_NAME = ev.Object.Key
-	var sdn Sdn
+	var cliente Cliente
+	var credito Credito
+	var certificado Certificado
 
 	//Iniciar sesion en aws
 	sess, err := session.NewSession(&aws.Config{
@@ -62,25 +78,70 @@ func Handler(ctx context.Context, ev Evento) (string, error) {
 
 	result, _ := OpenFile(*file)
 
-	cell1 := result.GetCellValue("Sheet1", "A1")
-	cell2 := result.GetCellValue("Sheet1", "B1")
+	cell1 := result.GetCellValue("Sheet1", "A2")
+	cell2 := result.GetCellValue("Sheet1", "B2")
+	cell3 := result.GetCellValue("Sheet1", "C2")
+	cell4 := result.GetCellValue("Sheet1", "D2")
+	cell5 := result.GetCellValue("Sheet1", "E2")
+	cell6 := result.GetCellValue("Sheet1", "F2")
 
-	sdn = Sdn{
-		Id:       "Trama",
-		Number:   cell1,
-		Footnote: cell2,
+	cliente = Cliente{
+		PK:     "Cliente",
+		Sk:     cell3,
+		TIdDoc: cell2,
+		NIdDoc: cell3,
+		Name:   cell4,
 	}
-	data, err := MarshalMap(sdn)
+
+	credito = Credito{
+		PK:       "Credito",
+		Sk:       cell1,
+		Currency: cell5,
+	}
+
+	certificado = Certificado{
+		PK:    "Certificado",
+		Sk:    cell1,
+		Prime: cell6,
+	}
+
+	data1, _ := MarshalMap(cliente)
+	data2, _ := MarshalMap(credito)
+	data3, _ := MarshalMap(certificado)
+
 	if err != nil {
 		fmt.Println(err.Error())
 		return "marshal error", err
 	}
-	params := &dynamodb.PutItemInput{
-		Item:      data,
+	params1 := &dynamodb.PutItemInput{
+		Item:      data1,
 		TableName: aws.String(TABLE_NAME),
 	}
-	_, err2 := svcDynamo.PutItem(params)
+	_, err2 := svcDynamo.PutItem(params1)
+
 	if err2 != nil {
+		fmt.Println(err2.Error())
+		return "dynamo error", err2
+	}
+
+	params2 := &dynamodb.PutItemInput{
+		Item:      data2,
+		TableName: aws.String(TABLE_NAME),
+	}
+	_, err3 := svcDynamo.PutItem(params2)
+
+	if err3 != nil {
+		fmt.Println(err2.Error())
+		return "dynamo error", err2
+	}
+
+	params3 := &dynamodb.PutItemInput{
+		Item:      data3,
+		TableName: aws.String(TABLE_NAME),
+	}
+	_, err4 := svcDynamo.PutItem(params3)
+
+	if err4 != nil {
 		fmt.Println(err2.Error())
 		return "dynamo error", err2
 	}

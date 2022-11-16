@@ -11,10 +11,15 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 )
 
 type Input struct {
 	Input CargaEvent `json:"input"`
+}
+
+type CantidadProcesos struct {
+	Cantidad int `json:"cantidad"`
 }
 
 type CargaEvent struct {
@@ -54,6 +59,56 @@ func handler(ctx context.Context, event Input) (string, error) {
 
 	svc := dynamodb.New(sess)
 
+	keyCond := expression.KeyAnd(
+		expression.Key("pk").Equal(expression.Value("CONTADOR")),
+		expression.Key("sk").BeginsWith("IdProceso"),
+	)
+
+	proj := expression.NamesList(expression.Name("cantidad"))
+
+	expr, err := expression.NewBuilder().
+		WithKeyCondition(keyCond).
+		WithProjection(proj).
+		Build()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	inputQuery := &dynamodb.QueryInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		KeyConditionExpression:    expr.KeyCondition(),
+		ProjectionExpression:      expr.Projection(),
+		TableName:                 aws.String(TABLE_NAME),
+	}
+
+	result, _ := svc.Query(inputQuery)
+
+	// lastIdProcesoInput := &dynamodb.QueryInput{
+	// 	// KeyConditions: map[string]*dynamodb.Condition{
+	// 	// 	"poliza": {
+	// 	// 		ComparisonOperator: aws.String("EQ"),
+	// 	// 		AttributeValueList: []*dynamodb.AttributeValue{
+	// 	// 			{
+	// 	// 				S: aws.String("81"),
+	// 	// 			},
+	// 	// 		},
+	// 	// 	},
+	// 	// },
+	// 	KeyConditionExpression: &keyCond,
+	// 	TableName:              aws.String(TABLE_NAME),
+	// }
+	// resp, _ := svc.Query(lastIdProcesoInput)
+
+	// personObj := []Carga{}
+	// _ = dynamodbattribute.UnmarshalListOfMaps(resp.Items, &personObj)
+
+	// fmt.Println("separacion")
+	items := []CantidadProcesos{}
+
+	cantidad := dynamodbattribute.UnmarshalListOfMaps(result.Items, &items)
+	fmt.Print(cantidad)
+
 	carga := &Carga{
 		Pk:                 "TRAMA",
 		Sk:                 event.Input.Poliza,
@@ -75,18 +130,18 @@ func handler(ctx context.Context, event Input) (string, error) {
 		return "Error on marshal", err
 	}
 
-	input := &dynamodb.PutItemInput{
+	inputPut := &dynamodb.PutItemInput{
 		Item:      item,
 		TableName: aws.String(TABLE_NAME),
 	}
 
-	_, err = svc.PutItem(input)
+	_, err = svc.PutItem(inputPut)
 	if err != nil {
 		fmt.Println("error on putitem")
 		return "error on putitem", err
 	}
 
-	fmt.Println(carga)
+	// fmt.Println(carga)
 	return "Succes", nil
 }
 
