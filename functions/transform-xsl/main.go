@@ -15,6 +15,26 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
+type AtributoValor struct {
+	Atributo string `json:"atributo"`
+	Valor    string `json:"valor"`
+}
+
+type ValorFuncion struct {
+	Valor   string   `json:"valor"`
+	Funcion []string `json:"funcion"`
+}
+
+type AtributoFuncion struct {
+	Atributo string   `json:"atributo"`
+	Funcion  []string `json:"funcion"`
+}
+
+type QueryConfiguradorResponse struct {
+	Atributo string `json:"atributo"`
+	Funcion  string `json:"funcion"`
+}
+
 type Cliente struct {
 	PK     string `json:"pk"`
 	Sk     string `json:"sk"`
@@ -50,59 +70,183 @@ func Handler(ctx context.Context, ev Evento) (string, error) {
 	// var TABLE_NAME = os.Getenv("TABLA_NAME")
 	var BUCKET_NAME = os.Getenv("BUCKET_NAME")
 	var OBJECT_NAME = ev.Object.Key
-	// var cliente Cliente
-	// var credito Credito
-	// var certificado Certificado
+	var TABLE_NAME_CONFIGURADOR = os.Getenv("TABLA_NAME_CONFIGURADOR")
 
 	//Iniciar sesion en aws
-	sess, err := session.NewSession(&aws.Config{
+	sess, _ := session.NewSession(&aws.Config{
 		Region: aws.String(os.Getenv("us-east-1"))},
 	)
-	if err != nil {
-		fmt.Println(err.Error())
-		return "", err
-	}
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// 	return _, err
+	// }
 
-	// svcDynamo := dynamodb.New(sess) // Dynamodb
-	svcS3 := s3.New(sess) // s3
+	svcDynamo := dynamodb.New(sess) // Dynamodb
+	svcS3 := s3.New(sess)           // s3
 
-	file, err := svcS3.GetObject(
+	// Retrieve file from S3 using EventBridge
+	file, _ := svcS3.GetObject(
 		&s3.GetObjectInput{
 			Bucket: aws.String(BUCKET_NAME),
 			Key:    aws.String(OBJECT_NAME),
 		})
-	if err != nil {
-		fmt.Println(err.Error())
-		return "could not retrieve document", err
-	}
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// 	return "could not retrieve document", err
+	// }
 
+	// Open XSLX file
 	result, _ := OpenFile(*file)
 
-	// cell1 := result.GetCellValue("Sheet1", "A2")
-	// cell2 := result.GetCellValue("Sheet1", "B2")
-	// cell3 := result.GetCellValue("Sheet1", "C2")
-	// cell4 := result.GetCellValue("Sheet1", "D2")
-	// cell5 := result.GetCellValue("Sheet1", "E2")
-	// cell6 := result.GetCellValue("Sheet1", "F2")
+	// Save the name of the columns
+	columnas := result.GetRows("Sheet1")[0]
 
-	// cliente = Cliente{
-	// 	PK:     "Cliente",
-	// 	Sk:     cell3,
-	// 	TIdDoc: cell2,
-	// 	NIdDoc: cell3,
-	// 	Name:   cell4,
+	mapFirstRows := make(map[int]string)
+
+	for i, firstRow := range columnas {
+		mapFirstRows[i] = firstRow
+	}
+	fmt.Println(mapFirstRows)
+
+	// Query to know the functions that will be applied to their respective columns (ATRIBUTO - FUNCION)
+	inputQueryConfigurador := dynamodb.QueryInput{
+		TableName:              aws.String(TABLE_NAME_CONFIGURADOR),
+		KeyConditionExpression: aws.String("pk=:pk"),
+		ExpressionAttributeNames: map[string]*string{
+			"#atributo": aws.String("atributo"),
+			"#funcion":  aws.String("funcion"),
+		},
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":pk": {S: aws.String("1")},
+		},
+		ProjectionExpression: aws.String("#funcion, #atributo"),
+	}
+
+	queryConfigurador, err := svcDynamo.Query(&inputQueryConfigurador)
+	if err != nil {
+		fmt.Println(err.Error())
+		return "could not get from configurador", err
+	}
+
+	atributoFuncionList := []QueryConfiguradorResponse{}
+	err = dynamodbattribute.UnmarshalListOfMaps(queryConfigurador.Items, &atributoFuncionList)
+	if err != nil {
+		fmt.Println("Unmarshall Error")
+		return "error on unmarshall", err
+	}
+
+	// Convertir las funciones del query traido de string a array (funcion)
+	atributoFuncionArray := []AtributoFuncion{}
+
+	for atributoFuncionContador := range atributoFuncionList {
+		var stringAsArray []string
+		atributoFuncionElement := AtributoFuncion{
+			Atributo: atributoFuncionList[atributoFuncionContador].Atributo,
+			Funcion:  append(stringAsArray, atributoFuncionList[atributoFuncionContador].Funcion),
+		}
+		atributoFuncionArray = append(atributoFuncionArray, atributoFuncionElement)
+	}
+
+	fmt.Println("atributoFuncionArray")
+	fmt.Println(atributoFuncionArray)
+
+	// Hashmap de atributo con su respectivas funciones
+	mapAtributoFuncion := make(map[string][]string)
+
+	for atributoFuncionArrayContador := range atributoFuncionArray {
+		if val, ok := mapAtributoFuncion[atributoFuncionArray[atributoFuncionArrayContador].Atributo]; ok {
+			mapAtributoFuncion[atributoFuncionArray[atributoFuncionArrayContador].Atributo] = append(val, atributoFuncionArray[atributoFuncionArrayContador].Funcion...)
+		} else {
+			mapAtributoFuncion[atributoFuncionArray[atributoFuncionArrayContador].Atributo] = atributoFuncionArray[atributoFuncionArrayContador].Funcion
+		}
+	}
+
+	fmt.Println("mapAtributoFuncion")
+	fmt.Println(mapAtributoFuncion)
+
+	// Convierte el archivo (matriz) a un array que junta al atributo con su valor
+	atributoValorList := []AtributoValor{}
+
+	for _, rowValues := range result.GetRows("Sheet1")[1:] {
+		for columnIndex, columnValue := range rowValues {
+			element := AtributoValor{
+				Atributo: mapFirstRows[columnIndex],
+				Valor:    columnValue,
+			}
+			atributoValorList = append(atributoValorList, element)
+		}
+	}
+
+	fmt.Println("atributoValorList")
+	fmt.Println(atributoValorList)
+
+	//////////////////////////////////////////////////////////////////////////////////////////////
+
+	valorFuncionList := []ValorFuncion{}
+
+	for valorFuncionListContador := 0; valorFuncionListContador < len(atributoValorList); valorFuncionListContador++ {
+		// element := ValorFuncion{
+		// 	Valor:   atributoValorList[valorFuncionListContador].Valor,
+		// 	Funcion: mapAtributoFuncion[atributoValorList[valorFuncionListContador].Atributo],
+		// }
+		// valorFuncionList = append(valorFuncionList, element)
+		if val, ok := mapAtributoFuncion[atributoValorList[valorFuncionListContador].Atributo]; ok {
+			element := ValorFuncion{
+				Valor:   atributoValorList[valorFuncionListContador].Valor,
+				Funcion: val,
+			}
+			valorFuncionList = append(valorFuncionList, element)
+		}
+	}
+
+	fmt.Println("valorFuncionList")
+	fmt.Println(valorFuncionList)
+
+	// cell1 := result.GetCellValue("Sheet1", "A2")
+	// TIdDoc := result.GetCellValue("Sheet1", "B2")
+	// NIdDoc := result.GetCellValue("Sheet1", "C2")
+	// Name := result.GetCellValue("Sheet1", "D2")
+	// Currency := result.GetCellValue("Sheet1", "E2")
+	// Prime := result.GetCellValue("Sheet1", "F2")
+
+	// var matrix = [][]string{{cell1, TIdDoc, NIdDoc, Name, Currency, Prime}}
+
+	// matrix[0] = append(matrix[0], cell1)
+	// matrix[0] = append(matrix[0], TIdDoc)
+	// matrix[0] = append(matrix[0], NIdDoc)
+	// matrix[0] = append(matrix[0], Name)
+	// matrix[0] = append(matrix[0], Currency)
+	// matrix[0] = append(matrix[0], Prime)
+
+	// println(matrix[0][1])
+
+	// var i, j int
+
+	// for i = 0; i < 1; i++ {
+	// 	for j = 0; j < 6; j++ {
+	// 		fmt.Print(matrix[i][j], "\t")
+	// 	}
+	// 	fmt.Println(" ")
 	// }
 
-	// credito = Credito{
+	// cliente := Cliente{
+	// 	PK:     "Cliente",
+	// 	Sk:     NIdDoc,
+	// 	TIdDoc: TIdDoc,
+	// 	NIdDoc: NIdDoc,
+	// 	Name:   Name,
+	// }
+
+	// credito := Credito{
 	// 	PK:       "Credito",
 	// 	Sk:       cell1,
-	// 	Currency: cell5,
+	// 	Currency: Currency,
 	// }
 
-	// certificado = Certificado{
+	// certificado := Certificado{
 	// 	PK:    "Certificado",
 	// 	Sk:    cell1,
-	// 	Prime: cell6,
+	// 	Prime: Prime,
 	// }
 
 	// data1, _ := MarshalMap(cliente)
@@ -146,15 +290,21 @@ func Handler(ctx context.Context, ev Evento) (string, error) {
 	// 	return "dynamo error", err2
 	// }
 
-	rows := result.GetRows("Sheet1")
-	fmt.Println(len(rows))
+	// rows := result.GetRows("Sheet1")
+	// fmt.Println(len(rows))
 
-	for _, row := range rows {
-		for _, colCell := range row {
-			fmt.Print(colCell, "\t")
-		}
-	}
-	return "success", nil
+	// for _, row := range rows {
+	// 	for _, colCell := range row {
+	// 		fmt.Print(colCell, "\t")
+	// 	}
+	// }
+
+	// for _, rowValues := range result.GetRows("Sheet1") {
+	// 	for columnIndex, columnValue := range rowValues {
+	// 		mapFirstRows[columnIndex] == mapAtributoFuncion[]
+	// 	}
+	// }
+	return "testing", nil
 }
 
 func main() {

@@ -260,8 +260,9 @@ Resources:
       RetentionInDays: 3
 
 
-
-  # DynamoDB
+ ###############      
+ ## DynamoDB  ##
+ ############### 
   DB:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -294,7 +295,58 @@ Resources:
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
 
-# Functions
+  DBConfigurador:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: DBConfigurador
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+
+
+ ###############      
+ ## Functions ##
+ ###############  
+
+  # GUARDAR CONFIGURACION
+  SaveStructure:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./functions/configurador/put
+      Handler: handler
+      Runtime: go1.x
+      Environment:
+        Variables:
+          TableName: !Ref DBConfigurador
+          Region: !Sub ${AWS::Region}
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DBConfigurador
+
+
+  # Validacion
+  ValidacionFunctions:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./functions/validations
+      Handler: handler
+      Runtime: go1.x
+      Environment:
+        Variables:
+          Region: !Sub ${AWS::Region}
+      Policies:
+        - AWSLambdaBasicExecutionRole
+
+
   TransformCSVFunction:         
     Type: AWS::Serverless::Function
     Properties:
@@ -340,11 +392,14 @@ Resources:
       Environment:
         Variables:
           BUCKET_NAME: !Ref DataBucket
-          TABLA_NAME: !Ref DBTramas
+          TABLA_NAME_TRAMAS: !Ref DBTramas
+          TABLA_NAME_CONFIGURADOR: !Ref DBConfigurador
           REGION: !Sub ${AWS::Region}
       Policies: 
         - DynamoDBCrudPolicy:
             TableName: !Ref DBTramas
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DBConfigurador
         - AWSLambdaBasicExecutionRole
         - S3ReadPolicy:
             BucketName: !Ref DataBucket

@@ -1,0 +1,9 @@
+{
+  "Comment": "Validaciones",
+  "StartAt": "Recibir Estructura",
+  "States": {
+    "Recibir Estructura":{
+      "Type": "Task"
+    }
+  }
+}

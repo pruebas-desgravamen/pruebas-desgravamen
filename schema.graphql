@@ -15,6 +15,12 @@ enum Transaccion {
 #   year: String
 # }
 
+# input
+
+# input InputValidations{
+#   datosGenerales: 
+# }
+
 input InputCargaDashboard {
   tipo: Tipo
   # numero de poliza
@@ -67,6 +73,7 @@ type ShowDashboardOutput{
 type Mutation {
   uploadFile(input: InputCargaDashboard, filename: String): String
   firstServCarga(input: InputCargaDashboard): String
+  # validations(validations: InputValidations ): String
 }
 
 type Query{
