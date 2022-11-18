@@ -110,86 +110,6 @@ func ValidarDocumento(documento string, tipoDocumento string) (bool, error) {
 	return false, fmt.Errorf("El documento no es valido\n")
 }
 
-func calcularEdad(fechaNac time.Time, fechaCmp time.Time) int {
-	edad := fechaCmp.Year() - fechaNac.Year()
-	if fechaCmp.Month() < fechaNac.Month() || (fechaCmp.Month() == fechaNac.Month() && fechaCmp.Day() < fechaNac.Day()) {
-		edad--
-	}
-	return edad
-}
-
-func ValidarEdadMaxima(fechaNacimiento string, edadMaxima string, fechaComparacion string, formato string) (bool, error) {
-
-	fechaNac, err := time.Parse(formato, fechaNacimiento)
-	if err != nil {
-		return false, fmt.Errorf("Fecha de nacimiento %s no cumple con el formato %s", fechaNacimiento, formato)
-	}
-
-	fechaCmp, err := time.Parse(formato, fechaComparacion)
-
-	if err != nil {
-		return false, fmt.Errorf("Fecha de comparacion %s no cumple con el formato %s", fechaComparacion, formato)
-	}
-
-	edadMax, err := strconv.Atoi(edadMaxima)
-
-	edad := calcularEdad(fechaNac, fechaCmp)
-
-	if edad > edadMax {
-		return false, fmt.Errorf("La edad %d es mayor a la edad maxima %d", edad, edadMax)
-	}
-
-	return true, nil
-}
-
-func ValidarEdadMinima(fechaNacimiento string, edadMinima string, fechaComparacion string, formato string) (bool, error) {
-
-	fechaNac, err := time.Parse(formato, fechaNacimiento)
-	if err != nil {
-		return false, fmt.Errorf("Fecha de nacimiento %s no cumple con el formato %s", fechaNacimiento, formato)
-	}
-
-	fechaCmp, err := time.Parse(formato, fechaComparacion)
-
-	if err != nil {
-		return false, fmt.Errorf("Fecha de comparacion %s no cumple con el formato %s", fechaComparacion, formato)
-	}
-
-	edadMin, err := strconv.Atoi(edadMinima)
-
-	edad := calcularEdad(fechaNac, fechaCmp)
-
-	if edad < edadMin {
-		return false, fmt.Errorf("La edad %d es menor a la edad minima %d", edad, edadMin)
-	}
-
-	return true, nil
-}
-
-func ValidarEdadPermanencia(fechaNacimiento string, edadPermanencia string, fechaComparacion string, formato string) (bool, error) {
-
-	fechaNac, err := time.Parse(formato, fechaNacimiento)
-	if err != nil {
-		return false, fmt.Errorf("Fecha de nacimiento %s no cumple con el formato %s", fechaNacimiento, formato)
-	}
-
-	fechaCmp, err := time.Parse(formato, fechaComparacion)
-
-	if err != nil {
-		return false, fmt.Errorf("Fecha de comparacion %s no cumple con el formato %s", fechaComparacion, formato)
-	}
-
-	edadPerm, err := strconv.Atoi(edadPermanencia)
-
-	edad := calcularEdad(fechaNac, fechaCmp)
-
-	if edad > edadPerm {
-		return false, fmt.Errorf("La edad %d es mayor a la edad de permanencia %d", edad, edadPerm)
-	}
-
-	return true, nil
-}
-
 func ValidarFechaMaxima(fecha string, fechaComparacion string, formato string) (bool, error) {
 	fechaCmp, err := time.Parse(formato, fechaComparacion)
 	if err != nil {
@@ -271,7 +191,7 @@ func handler(funcion string, argumentos string) (bool, error) {
 	switch funcion {
 	case "ValidarNumero":
 		res, err = ValidarNumero(args[0])
-	case "valoresPosibles":
+	case "ValoresPosibles":
 		res, err = ValoresPosibles(args[0], args[1:])
 	case "LongitudMaxima":
 		long, _ := strconv.Atoi(args[1])
@@ -282,10 +202,6 @@ func handler(funcion string, argumentos string) (bool, error) {
 		res, err = FormulaIgualdadNumero(args[0], args[1], args[2])
 	case "FormulaIgualdadTexto":
 		res, err = FormulaIgualdadTexto(args[0], args[1])
-	case "ValidarEdadMinima":
-		res, err = ValidarEdadMinima(args[0], args[1], args[2], args[3])
-	case "ValidarEdadPermanencia":
-		res, err = ValidarEdadPermanencia(args[0], args[1], args[2], args[3])
 	case "ValidarFechaMaxima":
 		res, err = ValidarFechaMaxima(args[0], args[1], args[2])
 	case "ValidarFechaMinima":
