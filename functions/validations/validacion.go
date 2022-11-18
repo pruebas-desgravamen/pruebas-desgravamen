@@ -1,4 +1,4 @@
-package validations
+package main
 
 import (
 	"fmt"
@@ -18,7 +18,7 @@ func roundFloat(val float64, precision int) float64 {
 func ValidarNumero(valor string) (bool, error) {
 	_, err := strconv.ParseFloat(valor, 64)
 	if err != nil {
-		return false, fmt.Errorf("El valor no es un número\n")
+		return false, fmt.Errorf("el valor no es un número")
 	}
 	return true, nil
 }
@@ -29,12 +29,12 @@ func ValoresPosibles(valor string, valoresPosibles []string) (bool, error) {
 			return true, nil
 		}
 	}
-	return false, fmt.Errorf("El valor no es uno de los valores posibles\n")
+	return false, fmt.Errorf("el valor no es uno de los valores posibles")
 }
 
 func LongitudMaxima(valor string, longitud int) (bool, error) {
 	if len(valor) > longitud {
-		return false, fmt.Errorf("El valor %s supera la longitud máxima de %d", valor, longitud)
+		return false, fmt.Errorf("el valor %s supera la longitud máxima de %d", valor, longitud)
 	}
 	return true, nil
 }
@@ -42,7 +42,7 @@ func LongitudMaxima(valor string, longitud int) (bool, error) {
 func ValidarCaracteresEspeciales(texto string) (bool, error) {
 	for _, letra := range texto {
 		if (letra < 'a' || letra > 'z') && (letra < 'A' || letra > 'Z') {
-			return false, fmt.Errorf("El texto no es valido\n")
+			return false, fmt.Errorf("el texto no es valido")
 		}
 	}
 	return true, nil
@@ -50,13 +50,13 @@ func ValidarCaracteresEspeciales(texto string) (bool, error) {
 
 func FormulaIgualdadNumero(valor string, decimales string, valorComparacion string) (bool, error) {
 
-	num1, err := strconv.ParseFloat(valor, 8)
+	num1, err := strconv.ParseFloat(valor, 32)
 
 	if err != nil {
 		return false, err
 	}
 
-	num2, err := strconv.ParseFloat(valorComparacion, 8)
+	num2, err := strconv.ParseFloat(valorComparacion, 32)
 
 	if err != nil {
 		return false, err
@@ -72,7 +72,7 @@ func FormulaIgualdadNumero(valor string, decimales string, valorComparacion stri
 		return true, nil
 	}
 
-	return false, fmt.Errorf("Los valores no son iguales\n")
+	return false, fmt.Errorf("los valores no son iguales")
 
 }
 
@@ -82,13 +82,13 @@ func FormulaIgualdadTexto(valor string, valorComparacion string) (bool, error) {
 		return true, nil
 	}
 
-	return false, fmt.Errorf("Los valores no son iguales\n")
+	return false, fmt.Errorf("los valores no son iguales")
 
 }
 
 func LongitudMinima(texto string, longitud int) (bool, error) {
 	if len(texto) < longitud {
-		return false, fmt.Errorf("El valor %s supera la longitud mínima de %d", texto, longitud)
+		return false, fmt.Errorf("el valor %s supera la longitud mínima de %d", texto, longitud)
 	}
 	return true, nil
 }
@@ -99,7 +99,8 @@ func ValidarDocumento(documento string, tipoDocumento string) (bool, error) {
 
 	switch tipo {
 	case 2:
-		longitud = 8
+		longitud = 32
+
 	default:
 		longitud = 10
 	}
@@ -107,7 +108,7 @@ func ValidarDocumento(documento string, tipoDocumento string) (bool, error) {
 		return true, nil
 	}
 
-	return false, fmt.Errorf("El documento no es valido\n")
+	return false, fmt.Errorf("el documento no es valido")
 }
 
 func ValidarFechaMaxima(fecha string, fechaComparacion string, formato string) (bool, error) {
@@ -123,7 +124,7 @@ func ValidarFechaMaxima(fecha string, fechaComparacion string, formato string) (
 	}
 
 	if fechaGo.After(fechaCmp) {
-		return false, fmt.Errorf("Fecha %s es mayor a %s", fecha, fechaComparacion)
+		return false, fmt.Errorf("fecha %s es mayor a %s", fecha, fechaComparacion)
 	}
 
 	return true, nil
@@ -143,7 +144,7 @@ func ValidarFechaMinima(fecha string, fechaComparacion string, formato string) (
 	}
 
 	if fechaGo.Before(fechaCmp) {
-		return false, fmt.Errorf("Fecha %s es menor a %s", fecha, fechaComparacion)
+		return false, fmt.Errorf("fecha %s es menor a %s", fecha, fechaComparacion)
 	}
 
 	return true, nil
@@ -153,37 +154,37 @@ func ValidarFechaMinima(fecha string, fechaComparacion string, formato string) (
 func ValidarFormatoFecha(fecha string, formato string) (bool, error) {
 	_, err := time.Parse(formato, fecha)
 	if err != nil {
-		return false, fmt.Errorf("Fecha %s no cumple con el formato %s", fecha, formato)
+		return false, fmt.Errorf("fecha %s no cumple con el formato %s", fecha, formato)
 	}
 	return true, nil
 }
 
 func ValidarNull(valor string) (bool, error) {
 	if valor == "" {
-		return false, fmt.Errorf("El valor no puede ser nulo")
+		return false, fmt.Errorf("el valor no puede ser nulo")
 	}
 	return true, nil
 }
 
 func ValorMaximo(valor string, valorMaximo string) (bool, error) {
-	num, _ := strconv.ParseFloat(valor, 8)
-	max, _ := strconv.ParseFloat(valorMaximo, 8)
+	num, _ := strconv.ParseFloat(valor, 32)
+	max, _ := strconv.ParseFloat(valorMaximo, 32)
 	if num > max {
-		return false, fmt.Errorf("El valor es mayor al valor maximo\n")
+		return false, fmt.Errorf("el valor es mayor al valor maximo")
 	}
 	return true, nil
 }
 
 func ValorMinimo(valor string, valorMinimo string) (bool, error) {
-	num, _ := strconv.ParseFloat(valor, 8)
-	min, _ := strconv.ParseFloat(valorMinimo, 8)
+	num, _ := strconv.ParseFloat(valor, 32)
+	min, _ := strconv.ParseFloat(valorMinimo, 32)
 	if num < min {
-		return false, fmt.Errorf("El valor es menor al valor minimo\n")
+		return false, fmt.Errorf("el valor es menor al valor minimo")
 	}
 	return true, nil
 }
 
-func handler(funcion string, argumentos string) (bool, error) {
+func Handler(funcion string, argumentos string) (bool, error) {
 	args := strings.Split(argumentos, ",")
 	var res bool
 	var err error
@@ -215,12 +216,12 @@ func handler(funcion string, argumentos string) (bool, error) {
 	case "ValorMinimo":
 		res, err = ValorMinimo(args[0], args[1])
 	default:
-		return false, fmt.Errorf("Funcion no encontrada")
+		return false, fmt.Errorf("funcion no encontrada")
 
 	}
 	return res, err
 }
 
 func main() {
-	lambda.Start(handler)
+	lambda.Start(Handler)
 }
