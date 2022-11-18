@@ -39,19 +39,19 @@ type Poliza struct {
 }
 
 type Atributos struct {
-	Pk             string `json:"pk"`
-	Sk             string `json:"sk"`
-	Id             string `json:"id"`
-	Atributo       string `json:"atributo"`
-	TipoDato       string `json:"tipoDato"`
-	Obligatorio    string `json:"obligatorio"`
-	ValorUnico     string `json:"valorUnico"`
-	Funcion        string `json:"funcion"`
-	Origen         string `json:"origen"`
-	Argumento      string `json:"argumento"`
-	Dominio        string `json:"dominio"`
-	ColumnaDestino string `json:"columnaDestino"`
-	EntidadDestino string `json:"entidadDestino"`
+	Pk             string   `json:"pk"`
+	Sk             string   `json:"sk"`
+	Id             string   `json:"id"`
+	Atributo       string   `json:"atributo"`
+	TipoDato       string   `json:"tipoDato"`
+	Obligatorio    string   `json:"obligatorio"`
+	ValorUnico     string   `json:"valorUnico"`
+	Funcion        []string `json:"funcion"`
+	Origen         []string `json:"origen"`
+	Argumento      []string `json:"argumento"`
+	Dominio        []string `json:"dominio"`
+	ColumnaDestino string   `json:"columnaDestino"`
+	EntidadDestino string   `json:"entidadDestino"`
 }
 
 type Notificaciones struct {
