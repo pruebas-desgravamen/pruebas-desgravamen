@@ -304,12 +304,23 @@ Resources:
           AttributeType: S
         - AttributeName: sk
           AttributeType: S
+        - AttributeName: nPoliza
+          AttributeType: S
       KeySchema:
         - AttributeName: pk
           KeyType: HASH
         - AttributeName: sk
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+      - IndexName: pk-nPoliza
+        KeySchema:
+          - AttributeName: pk
+            KeyType: HASH
+          - AttributeName: nPoliza
+            KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
 
 
  ###############      
