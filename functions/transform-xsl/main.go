@@ -15,6 +15,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
+type AtributoFuncion struct {
+	Atributo string   `json:"atributo"`
+	Funcion  []string `json:"funcion"`
+}
 type AtributoValor struct {
 	Atributo string `json:"atributo"`
 	Valor    string `json:"valor"`
@@ -23,11 +27,6 @@ type AtributoValor struct {
 type ValorFuncion struct {
 	Valor   string   `json:"valor"`
 	Funcion []string `json:"funcion"`
-}
-
-type AtributoFuncion struct {
-	Atributo string   `json:"atributo"`
-	Funcion  []string `json:"funcion"`
 }
 
 type QueryConfiguradorResponse struct {
@@ -66,7 +65,7 @@ type Evento struct {
 	Object Iobject `json:"object"`
 }
 
-func Handler(ctx context.Context, ev Evento) (string, error) {
+func handler(ctx context.Context, ev Evento) ([]ValorFuncion, error) {
 
 	// var TABLE_NAME = os.Getenv("TABLA_NAME")
 	var BUCKET_NAME = os.Getenv("BUCKET_NAME")
@@ -124,25 +123,25 @@ func Handler(ctx context.Context, ev Evento) (string, error) {
 		ProjectionExpression: aws.String("#funcion, #atributo, #argumento"),
 	}
 
-	queryConfigurador, err := svcDynamo.Query(&inputQueryConfigurador)
-	if err != nil {
-		fmt.Println(err.Error())
-		return "could not get from configurador", err
-	}
+	queryConfigurador, _ := svcDynamo.Query(&inputQueryConfigurador)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// 	return "could not get from configurador", err
+	// }
 
 	queryResponse := []QueryConfiguradorResponse{}
-	err = dynamodbattribute.UnmarshalListOfMaps(queryConfigurador.Items, &queryResponse)
-	if err != nil {
-		fmt.Println("Unmarshall Error")
-		return "error on unmarshall", err
-	}
+	_ = dynamodbattribute.UnmarshalListOfMaps(queryConfigurador.Items, &queryResponse)
+	// if err != nil {
+	// 	fmt.Println("Unmarshall Error")
+	// 	return "error on unmarshall", err
+	// }
 
 	fmt.Println(queryResponse)
 
 	// validacion de cantidad de columnas
-	if len(columnas) == len(queryResponse) {
-		return "Error en la cantidad de columnas de la trama con la del configurador", nil
-	}
+	// if len(columnas) == len(queryResponse) {
+	// 	return "Error en la cantidad de columnas de la trama con la del configurador", nil
+	// }
 
 	for columnaContador := 0; columnaContador < len(queryResponse); columnaContador++ {
 		if columnas[columnaContador] == queryResponse[columnaContador].Atributo {
@@ -173,72 +172,75 @@ func Handler(ctx context.Context, ev Evento) (string, error) {
 	// 	// 	}
 	// }
 
-	// // Convertir las funciones del query traido de string a array (funcion)
-	// atributoFuncionArray := []AtributoFuncion{}
+	////////////////////////////// SE PUEDE JUNTAR //////////////////////////////////////////////////////////
+	// Guardar en un array cada atributo con su array de funciones
+	atributoFuncionArray := []AtributoFuncion{}
 
-	// for atributoFuncionContador := range queryResponse {
-	// 	var stringAsArray []string
-	// 	atributoFuncionElement := AtributoFuncion{
-	// 		Atributo: queryResponse[atributoFuncionContador].Atributo,
-	// 		Funcion:  append(stringAsArray, queryResponse[atributoFuncionContador].Funcion),
-	// 	}
-	// 	atributoFuncionArray = append(atributoFuncionArray, atributoFuncionElement)
-	// }
+	for atributoFuncionContador := range queryResponse {
+		// 	var stringAsArray []string
+		atributoFuncionElement := AtributoFuncion{
+			Atributo: queryResponse[atributoFuncionContador].Atributo,
+			Funcion:  queryResponse[atributoFuncionContador].Funcion,
+		}
+		atributoFuncionArray = append(atributoFuncionArray, atributoFuncionElement)
+	}
 
-	// fmt.Println("atributoFuncionArray")
-	// fmt.Println(atributoFuncionArray)
+	fmt.Println("atributoFuncionArray")
+	fmt.Println(atributoFuncionArray)
 
-	// // Hashmap de atributo con su respectivas funciones
-	// mapAtributoFuncion := make(map[string][]string)
+	// Hashmap de atributo con su respectivas funciones
+	mapAtributoFuncion := make(map[string][]string)
 
-	// for atributoFuncionArrayContador := range atributoFuncionArray {
-	// 	if val, ok := mapAtributoFuncion[atributoFuncionArray[atributoFuncionArrayContador].Atributo]; ok {
-	// 		mapAtributoFuncion[atributoFuncionArray[atributoFuncionArrayContador].Atributo] = append(val, atributoFuncionArray[atributoFuncionArrayContador].Funcion...)
-	// 	} else {
-	// 		mapAtributoFuncion[atributoFuncionArray[atributoFuncionArrayContador].Atributo] = atributoFuncionArray[atributoFuncionArrayContador].Funcion
-	// 	}
-	// }
+	for atributoFuncionArrayContador := range atributoFuncionArray {
+		if val, ok := mapAtributoFuncion[atributoFuncionArray[atributoFuncionArrayContador].Atributo]; ok {
+			mapAtributoFuncion[atributoFuncionArray[atributoFuncionArrayContador].Atributo] = append(val, atributoFuncionArray[atributoFuncionArrayContador].Funcion...)
+		} else {
+			mapAtributoFuncion[atributoFuncionArray[atributoFuncionArrayContador].Atributo] = atributoFuncionArray[atributoFuncionArrayContador].Funcion
+		}
+	}
 
-	// fmt.Println("mapAtributoFuncion")
-	// fmt.Println(mapAtributoFuncion)
+	fmt.Println("mapAtributoFuncion")
+	fmt.Println(mapAtributoFuncion)
 
-	// // Convierte el archivo (matriz) a un array que junta al atributo con su valor
-	// atributoValorList := []AtributoValor{}
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	// for _, rowValues := range result.GetRows("Sheet1")[1:] {
-	// 	for columnIndex, columnValue := range rowValues {
-	// 		element := AtributoValor{
-	// 			Atributo: mapFirstRows[columnIndex],
-	// 			Valor:    columnValue,
-	// 		}
-	// 		atributoValorList = append(atributoValorList, element)
-	// 	}
-	// }
+	// Convierte el archivo (matriz) a un array que junta al atributo con su valor
+	atributoValorList := []AtributoValor{}
 
-	// fmt.Println("atributoValorList")
-	// fmt.Println(atributoValorList)
+	for _, rowValues := range result.GetRows("Sheet1")[1:] {
+		for columnIndex, columnValue := range rowValues {
+			element := AtributoValor{
+				Atributo: mapFirstRows[columnIndex],
+				Valor:    columnValue,
+			}
+			atributoValorList = append(atributoValorList, element)
+		}
+	}
+
+	fmt.Println("atributoValorList")
+	fmt.Println(atributoValorList)
 
 	// //////////////////////////////////////////////////////////////////////////////////////////////
 
-	// valorFuncionList := []ValorFuncion{}
+	valorFuncionList := []ValorFuncion{}
 
-	// for valorFuncionListContador := 0; valorFuncionListContador < len(atributoValorList); valorFuncionListContador++ {
-	// 	// element := ValorFuncion{
-	// 	// 	Valor:   atributoValorList[valorFuncionListContador].Valor,
-	// 	// 	Funcion: mapAtributoFuncion[atributoValorList[valorFuncionListContador].Atributo],
-	// 	// }
-	// 	// valorFuncionList = append(valorFuncionList, element)
-	// 	if val, ok := mapAtributoFuncion[atributoValorList[valorFuncionListContador].Atributo]; ok {
-	// 		element := ValorFuncion{
-	// 			Valor:   atributoValorList[valorFuncionListContador].Valor,
-	// 			Funcion: val,
-	// 		}
-	// 		valorFuncionList = append(valorFuncionList, element)
-	// 	}
-	// }
+	for valorFuncionListContador := 0; valorFuncionListContador < len(atributoValorList); valorFuncionListContador++ {
+		// 	// 	// element := ValorFuncion{
+		// 	// 	// 	Valor:   atributoValorList[valorFuncionListContador].Valor,
+		// 	// 	// 	Funcion: mapAtributoFuncion[atributoValorList[valorFuncionListContador].Atributo],
+		// 	// 	// }
+		// 	// 	// valorFuncionList = append(valorFuncionList, element)
+		if val, ok := mapAtributoFuncion[atributoValorList[valorFuncionListContador].Atributo]; ok {
+			element := ValorFuncion{
+				Valor:   atributoValorList[valorFuncionListContador].Valor,
+				Funcion: val,
+			}
+			valorFuncionList = append(valorFuncionList, element)
+		}
+	}
 
-	// fmt.Println("valorFuncionList")
-	// fmt.Println(valorFuncionList)
+	fmt.Println("valorFuncionList")
+	fmt.Println(valorFuncionList)
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -344,11 +346,11 @@ func Handler(ctx context.Context, ev Evento) (string, error) {
 	// 		mapFirstRows[columnIndex] == mapAtributoFuncion[]
 	// 	}
 	// }
-	return "testing", nil
+	return valorFuncionList, nil
 }
 
 func main() {
-	lambda.Start(Handler)
+	lambda.Start(handler)
 }
 
 func MarshalMap(in interface{}) (map[string]*dynamodb.AttributeValue, error) {
