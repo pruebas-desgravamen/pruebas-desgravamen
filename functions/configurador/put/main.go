@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
@@ -151,7 +150,7 @@ func handler(ctx context.Context, e Event) (string, error) {
 
 	for i := 0; i < len(e.Lectura); i++ {
 		e.Lectura[i].Pk = strconv.Itoa(nextIde)
-		e.Lectura[i].Sk = strings.ReplaceAll(e.Lectura[i].Atributo, " ", "") + "#" + strconv.Itoa(i+1)
+		e.Lectura[i].Sk = strconv.Itoa(i + 1)
 
 		putItem, err := MarshalMap(e.Lectura[i])
 

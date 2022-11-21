@@ -136,8 +136,42 @@ func Handler(ctx context.Context, ev Evento) (string, error) {
 		fmt.Println("Unmarshall Error")
 		return "error on unmarshall", err
 	}
-	fmt.Println(len(queryResponse))
+
 	fmt.Println(queryResponse)
+
+	// validacion de cantidad de columnas
+	if len(columnas) == len(queryResponse) {
+		return "Error en la cantidad de columnas de la trama con la del configurador", nil
+	}
+
+	for columnaContador := 0; columnaContador < len(queryResponse); columnaContador++ {
+		if columnas[columnaContador] == queryResponse[columnaContador].Atributo {
+			fmt.Println(columnas[columnaContador])
+			fmt.Println("ok")
+		} else {
+			fmt.Println("error")
+		}
+	}
+
+	// for _, queryResponseElement := range queryResponse {
+	// 	if contains(columnas, queryResponseElement.Atributo) {
+	// 		fmt.Println("works")
+	// 		fmt.Println(queryResponseElement.Atributo)
+	// 	} else {
+	// 		fmt.Println("error")
+	// 	}
+
+	// 	// if queryResponseElement.Atributo in columnas{
+
+	// 	// }
+	// 	// if val, ok := mapAtributoFuncion[atributoValorList[valorFuncionListContador].Atributo]; ok {
+	// 	// 		element := ValorFuncion{
+	// 	// 			Valor:   atributoValorList[valorFuncionListContador].Valor,
+	// 	// 			Funcion: val,
+	// 	// 		}
+	// 	// 		valorFuncionList = append(valorFuncionList, element)
+	// 	// 	}
+	// }
 
 	// // Convertir las funciones del query traido de string a array (funcion)
 	// atributoFuncionArray := []AtributoFuncion{}
