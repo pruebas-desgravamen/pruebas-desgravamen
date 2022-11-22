@@ -15,18 +15,24 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-type AtributoFuncion struct {
-	Atributo string   `json:"atributo"`
-	Funcion  []string `json:"funcion"`
+type FuncionArgumento struct {
+	Funcion   []string
+	Argumento []string
+}
+
+type AtributoFuncionArgumento struct {
+	Atributo          string           `json:"atributo"`
+	FuncionArgumentos FuncionArgumento `json:"funcion"`
 }
 type AtributoValor struct {
 	Atributo string `json:"atributo"`
 	Valor    string `json:"valor"`
 }
 
-type ValorFuncion struct {
-	Valor   string   `json:"valor"`
-	Funcion []string `json:"funcion"`
+type ValorFuncionArgumento struct {
+	Valor      string   `json:"valor"`
+	Funcion    []string `json:"funcion"`
+	Argumentos []string
 }
 
 type QueryConfiguradorResponse struct {
@@ -65,7 +71,7 @@ type Evento struct {
 	Object Iobject `json:"object"`
 }
 
-func handler(ctx context.Context, ev Evento) ([]ValorFuncion, error) {
+func handler(ctx context.Context, ev Evento) ([]ValorFuncionArgumento, error) {
 
 	// var TABLE_NAME = os.Getenv("TABLA_NAME")
 	var BUCKET_NAME = os.Getenv("BUCKET_NAME")
@@ -174,13 +180,17 @@ func handler(ctx context.Context, ev Evento) ([]ValorFuncion, error) {
 
 	////////////////////////////// SE PUEDE JUNTAR //////////////////////////////////////////////////////////
 	// Guardar en un array cada atributo con su array de funciones
-	atributoFuncionArray := []AtributoFuncion{}
+	atributoFuncionArray := []AtributoFuncionArgumento{}
 
 	for atributoFuncionContador := range queryResponse {
 		// 	var stringAsArray []string
-		atributoFuncionElement := AtributoFuncion{
+		atributoFuncionElement := AtributoFuncionArgumento{
 			Atributo: queryResponse[atributoFuncionContador].Atributo,
-			Funcion:  queryResponse[atributoFuncionContador].Funcion,
+			FuncionArgumentos: FuncionArgumento{
+				Funcion:   queryResponse[atributoFuncionContador].Funcion,
+				Argumento: queryResponse[atributoFuncionContador].Argumento,
+			},
+			// Funcion:           queryResponse[atributoFuncionContador].Funcion,
 		}
 		atributoFuncionArray = append(atributoFuncionArray, atributoFuncionElement)
 	}
@@ -189,18 +199,14 @@ func handler(ctx context.Context, ev Evento) ([]ValorFuncion, error) {
 	fmt.Println(atributoFuncionArray)
 
 	// Hashmap de atributo con su respectivas funciones
-	mapAtributoFuncion := make(map[string][]string)
+	mapAtributoFuncionArgumento := make(map[string]FuncionArgumento)
 
 	for atributoFuncionArrayContador := range atributoFuncionArray {
-		if val, ok := mapAtributoFuncion[atributoFuncionArray[atributoFuncionArrayContador].Atributo]; ok {
-			mapAtributoFuncion[atributoFuncionArray[atributoFuncionArrayContador].Atributo] = append(val, atributoFuncionArray[atributoFuncionArrayContador].Funcion...)
-		} else {
-			mapAtributoFuncion[atributoFuncionArray[atributoFuncionArrayContador].Atributo] = atributoFuncionArray[atributoFuncionArrayContador].Funcion
-		}
+		mapAtributoFuncionArgumento[atributoFuncionArray[atributoFuncionArrayContador].Atributo] = atributoFuncionArray[atributoFuncionArrayContador].FuncionArgumentos
 	}
 
-	fmt.Println("mapAtributoFuncion")
-	fmt.Println(mapAtributoFuncion)
+	fmt.Println("mapAtributoFuncionArgumento")
+	fmt.Println(mapAtributoFuncionArgumento)
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -222,7 +228,7 @@ func handler(ctx context.Context, ev Evento) ([]ValorFuncion, error) {
 
 	// //////////////////////////////////////////////////////////////////////////////////////////////
 
-	valorFuncionList := []ValorFuncion{}
+	valorFuncionList := []ValorFuncionArgumento{}
 
 	for valorFuncionListContador := 0; valorFuncionListContador < len(atributoValorList); valorFuncionListContador++ {
 		// 	// 	// element := ValorFuncion{
@@ -230,10 +236,11 @@ func handler(ctx context.Context, ev Evento) ([]ValorFuncion, error) {
 		// 	// 	// 	Funcion: mapAtributoFuncion[atributoValorList[valorFuncionListContador].Atributo],
 		// 	// 	// }
 		// 	// 	// valorFuncionList = append(valorFuncionList, element)
-		if val, ok := mapAtributoFuncion[atributoValorList[valorFuncionListContador].Atributo]; ok {
-			element := ValorFuncion{
-				Valor:   atributoValorList[valorFuncionListContador].Valor,
-				Funcion: val,
+		if val, ok := mapAtributoFuncionArgumento[atributoValorList[valorFuncionListContador].Atributo]; ok {
+			element := ValorFuncionArgumento{
+				Valor:      atributoValorList[valorFuncionListContador].Valor,
+				Funcion:    val.Funcion,
+				Argumentos: val.Argumento,
 			}
 			valorFuncionList = append(valorFuncionList, element)
 		}
