@@ -16,6 +16,7 @@ import (
 )
 
 type FuncionArgumento struct {
+	Atributo  string
 	Funcion   []string
 	Argumento []string
 }
@@ -24,15 +25,18 @@ type AtributoFuncionArgumento struct {
 	Atributo          string           `json:"atributo"`
 	FuncionArgumentos FuncionArgumento `json:"funcion"`
 }
-type AtributoValor struct {
+type RegistroAtributoValor struct {
+	Registro int
 	Atributo string `json:"atributo"`
 	Valor    string `json:"valor"`
 }
 
-type ValorFuncionArgumento struct {
+type RegistroAtributoValorFuncionArgumento struct {
+	Registro   int      `json:"registro"`
+	Atributo   string   `json:"atributo"`
 	Valor      string   `json:"valor"`
 	Funcion    []string `json:"funcion"`
-	Argumentos []string
+	Argumentos []string `json:"argumentos"`
 }
 
 type QueryConfiguradorResponse struct {
@@ -71,7 +75,7 @@ type Evento struct {
 	Object Iobject `json:"object"`
 }
 
-func handler(ctx context.Context, ev Evento) ([]ValorFuncionArgumento, error) {
+func handler(ctx context.Context, ev Evento) ([]RegistroAtributoValorFuncionArgumento, error) {
 
 	// var TABLE_NAME = os.Getenv("TABLA_NAME")
 	var BUCKET_NAME = os.Getenv("BUCKET_NAME")
@@ -187,6 +191,7 @@ func handler(ctx context.Context, ev Evento) ([]ValorFuncionArgumento, error) {
 		atributoFuncionElement := AtributoFuncionArgumento{
 			Atributo: queryResponse[atributoFuncionContador].Atributo,
 			FuncionArgumentos: FuncionArgumento{
+				Atributo:  queryResponse[atributoFuncionContador].Atributo,
 				Funcion:   queryResponse[atributoFuncionContador].Funcion,
 				Argumento: queryResponse[atributoFuncionContador].Argumento,
 			},
@@ -211,12 +216,13 @@ func handler(ctx context.Context, ev Evento) ([]ValorFuncionArgumento, error) {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// Convierte el archivo (matriz) a un array que junta al atributo con su valor
-	atributoValorList := []AtributoValor{}
+	atributoValorList := []RegistroAtributoValor{}
 
 	for _, rowValues := range result.GetRows("Sheet1")[1:] {
 		for columnIndex, columnValue := range rowValues {
-			element := AtributoValor{
+			element := RegistroAtributoValor{
 				Atributo: mapFirstRows[columnIndex],
+				Registro: columnIndex,
 				Valor:    columnValue,
 			}
 			atributoValorList = append(atributoValorList, element)
@@ -228,7 +234,7 @@ func handler(ctx context.Context, ev Evento) ([]ValorFuncionArgumento, error) {
 
 	// //////////////////////////////////////////////////////////////////////////////////////////////
 
-	valorFuncionList := []ValorFuncionArgumento{}
+	valorFuncionList := []RegistroAtributoValorFuncionArgumento{}
 
 	for valorFuncionListContador := 0; valorFuncionListContador < len(atributoValorList); valorFuncionListContador++ {
 		// 	// 	// element := ValorFuncion{
@@ -237,8 +243,9 @@ func handler(ctx context.Context, ev Evento) ([]ValorFuncionArgumento, error) {
 		// 	// 	// }
 		// 	// 	// valorFuncionList = append(valorFuncionList, element)
 		if val, ok := mapAtributoFuncionArgumento[atributoValorList[valorFuncionListContador].Atributo]; ok {
-			element := ValorFuncionArgumento{
+			element := RegistroAtributoValorFuncionArgumento{
 				Valor:      atributoValorList[valorFuncionListContador].Valor,
+				Atributo:   val.Atributo,
 				Funcion:    val.Funcion,
 				Argumentos: val.Argumento,
 			}

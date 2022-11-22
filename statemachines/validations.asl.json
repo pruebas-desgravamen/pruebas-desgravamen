@@ -3,7 +3,26 @@
   "StartAt": "Recibir Estructura",
   "States": {
     "Recibir Estructura":{
-      "Type": "Task"
-    }
+      "Type": "Task",
+      "Resource": "${TransformXSLFunctionArn}",
+      "OutputPath": "$",
+      "Next": "MapState"
+    },
+    "MapState":{
+      "Type": "Map",
+      "ItemsPath": "$",
+      "MaxConcurrency": 40,
+      "Iterator": {
+          "StartAt": "Validate",
+          "States": {
+              "Validate": {
+                  "Type": "Task",
+                  "Resource": "${ValidationFunctionArn}",
+                  "End": true
+              }
+          }
+      },
+      "End": true
+  }
   }
 }

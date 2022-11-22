@@ -1,0 +1,22 @@
+{
+    "Comment": "Validation Step Functions",
+    "StartAt": "MapState",
+    "States": {
+        "MapState":{
+            "Type": "Map",
+            "ItemsPath": "$$.Execution.Input",
+            "MaxConcurrency": 40,
+            "Iterator": {
+                "StartAt": "Validate",
+                "States": {
+                    "Validate": {
+                        "Type": "Task",
+                        "Resource": "${ValidationFunctionArn}",
+                        "End": true
+                    }
+                }
+            },
+            "End": true
+        }
+    }
+}

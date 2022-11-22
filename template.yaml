@@ -26,6 +26,8 @@ Resources:
                   - states:StartSyncExecution #Type: Express
                 Resource:
                   - !Ref UploadFileStateMachine
+                  # - !Ref ValidateCellStateMachine
+                  - !Ref ValidationsStateMachine
               - Effect: Allow
                 Action:
                   - dynamodb:GetItem
@@ -216,7 +218,7 @@ Resources:
     Properties:
       DefinitionUri: statemachines/upload_file.asl.json
       Type: EXPRESS
-      Name: desg-upload-file
+      Name: upload-file
       DefinitionSubstitutions:  
         TableName: !Ref DB
         FirstServCargaFunctionArn: !GetAtt FirstServCargaFunction.Arn
@@ -236,11 +238,52 @@ Resources:
             TableName: !Ref DB 
         - CloudWatchLogsFullAccess
 
+  ValidationsStateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      DefinitionUri: statemachines/validations.asl.json
+      Type: EXPRESS
+      Name: validation
+      DefinitionSubstitutions:
+        ValidationFunctionArn: !GetAtt ValidationFunction.Arn
+        TransformXSLFunctionArn: !GetAtt TransformXSLFunction.Arn
+      Logging:
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt ValidationsLogs.Arn
+        IncludeExecutionData: true
+        Level: ALL  
+      Policies: 
+        - LambdaInvokePolicy:
+            FunctionName: !Ref ValidationFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref TransformXSLFunction
+        - CloudWatchLogsFullAccess
+      Events:
+        EBRule:
+          Type: EventBridgeRule
+          Properties:
+            InputPath: "$.detail"
+            Pattern:
+              detail:
+                bucket:
+                  name:
+                    - !Ref DataBucket                
+              detail-type:
+                - "Object Created"
+              source:
+                - aws.s3 
 
  ###############      
  ## LOGS      ##
  ###############  
 
+  ValidationsLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/vendedlogs/states/${AWS::StackName}/validation
+      RetentionInDays: 3
+      
   TransformCSV:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -345,7 +388,7 @@ Resources:
 
 
   # Validacion
-  ValidacionFunctions:
+  ValidationFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: ./functions/validations
@@ -414,20 +457,20 @@ Resources:
         - AWSLambdaBasicExecutionRole
         - S3ReadPolicy:
             BucketName: !Ref DataBucket
-      Events:
-        EBRule:
-          Type: EventBridgeRule
-          Properties:
-            InputPath: "$.detail"
-            Pattern:
-              detail:
-                bucket:
-                  name:
-                    - !Ref DataBucket                
-              detail-type:
-                - "Object Created"
-              source:
-                - aws.s3 
+      # Events:
+      #   EBRule:
+      #     Type: EventBridgeRule
+      #     Properties:
+      #       InputPath: "$.detail"
+      #       Pattern:
+      #         detail:
+      #           bucket:
+      #             name:
+      #               - !Ref DataBucket                
+      #         detail-type:
+      #           - "Object Created"
+      #         source:
+      #           - aws.s3 
 
   GagaFunction:         
     Type: AWS::Serverless::Function

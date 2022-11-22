@@ -169,7 +169,7 @@ func handler(ctx context.Context, e Event) (string, error) {
 
 	for i := 0; i < len(e.Notificaciones); i++ {
 		e.Notificaciones[i].Pk = "NOTIFICACION"
-		e.Notificaciones[i].Sk = strconv.Itoa(nextIde) + "#" + e.Notificaciones[i].Fase + "#" + strconv.Itoa(i)
+		e.Notificaciones[i].Sk = strconv.Itoa(nextIde) + "#" + e.Notificaciones[i].Fase + "#" + (e.Notificaciones[i].Id)
 
 		putItem, err := MarshalMap(e.Notificaciones[i])
 
