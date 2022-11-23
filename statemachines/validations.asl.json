@@ -11,7 +11,7 @@
     "MapState":{
       "Type": "Map",
       "ItemsPath": "$",
-      "MaxConcurrency": 40,
+      "MaxConcurrency": 10,
       "Iterator": {
           "StartAt": "Validate",
           "States": {

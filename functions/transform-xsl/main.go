@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/360EntSecGroup-Skylar/excelize"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -18,7 +19,7 @@ import (
 type FuncionArgumento struct {
 	Atributo  string
 	Funcion   []string
-	Argumento []string
+	Argumento [][]string
 }
 
 type AtributoFuncionArgumento struct {
@@ -32,11 +33,11 @@ type RegistroAtributoValor struct {
 }
 
 type RegistroAtributoValorFuncionArgumento struct {
-	Registro   int      `json:"registro"`
-	Atributo   string   `json:"atributo"`
-	Valor      string   `json:"valor"`
-	Funcion    []string `json:"funcion"`
-	Argumentos []string `json:"argumentos"`
+	Registro   int        `json:"registro"`
+	Atributo   string     `json:"atributo"`
+	Valor      string     `json:"valor"`
+	Funcion    []string   `json:"funcion"`
+	Argumentos [][]string `json:"argumentos"`
 }
 
 type QueryConfiguradorResponse struct {
@@ -187,16 +188,23 @@ func handler(ctx context.Context, ev Evento) ([]RegistroAtributoValorFuncionArgu
 	atributoFuncionArray := []AtributoFuncionArgumento{}
 
 	for atributoFuncionContador := range queryResponse {
-		// 	var stringAsArray []string
+		var argumentoMatrix [][]string
+		var argumentoArray []string
+
+		for argumento := range queryResponse[atributoFuncionContador].Argumento {
+			argumentoArray = strings.Split(queryResponse[atributoFuncionContador].Argumento[argumento], ",")
+			argumentoMatrix = append(argumentoMatrix, argumentoArray)
+		}
+
 		atributoFuncionElement := AtributoFuncionArgumento{
 			Atributo: queryResponse[atributoFuncionContador].Atributo,
 			FuncionArgumentos: FuncionArgumento{
 				Atributo:  queryResponse[atributoFuncionContador].Atributo,
 				Funcion:   queryResponse[atributoFuncionContador].Funcion,
-				Argumento: queryResponse[atributoFuncionContador].Argumento,
+				Argumento: argumentoMatrix,
 			},
-			// Funcion:           queryResponse[atributoFuncionContador].Funcion,
 		}
+
 		atributoFuncionArray = append(atributoFuncionArray, atributoFuncionElement)
 	}
 
