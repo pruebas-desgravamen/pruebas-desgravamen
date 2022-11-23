@@ -196,6 +196,7 @@ func handler(e Event) (Response, error) {
 
 	var errores []FuncError
 	var validaciones []bool
+	argCont := 0
 
 	for i := 0; i < len(e.Funcion); i++ {
 		var validation bool
@@ -205,31 +206,42 @@ func handler(e Event) (Response, error) {
 		case "ValidarNumero":
 			validation, err = ValidarNumero(e.Valor, e.Atributo)
 		case "LongitudMaxima":
-			validation, err = LongitudMaxima(e.Valor, e.Argumentos[i][0], e.Atributo)
+			validation, err = LongitudMaxima(e.Valor, e.Argumentos[argCont][0], e.Atributo)
+			argCont++
 		case "LongitudMinima":
-			validation, err = LongitudMinima(e.Valor, e.Argumentos[i][0], e.Atributo)
+			validation, err = LongitudMinima(e.Valor, e.Argumentos[argCont][0], e.Atributo)
+			argCont++
 		case "ValidarFormatoFecha":
-			validation, err = ValidarFormatoFecha(e.Valor, e.Argumentos[i][0], e.Atributo)
+			validation, err = ValidarFormatoFecha(e.Valor, e.Argumentos[argCont][0], e.Atributo)
+			argCont++
 		case "ValidarNull":
 			validation, err = ValidarNull(e.Valor, e.Atributo)
 		case "ValorMaximo":
-			validation, err = ValorMaximo(e.Valor, e.Argumentos[i][0], e.Atributo)
+			validation, err = ValorMaximo(e.Valor, e.Argumentos[argCont][0], e.Atributo)
+			argCont++
 		case "ValorMinimo":
-			validation, err = ValorMinimo(e.Valor, e.Argumentos[i][0], e.Atributo)
+			validation, err = ValorMinimo(e.Valor, e.Argumentos[argCont][0], e.Atributo)
+			argCont++
 		case "ValidarCaracteresEspeciales":
 			validation, err = ValidarCaracteresEspeciales(e.Valor, e.Atributo)
 		case "ValidarDocumento":
-			validation, err = ValidarDocumento(e.Valor, e.Argumentos[i][0], e.Atributo)
+			validation, err = ValidarDocumento(e.Valor, e.Argumentos[argCont][0], e.Atributo)
+			argCont++
 		case "FormulaIgualdadTexto":
-			validation, err = FormulaIgualdadTexto(e.Valor, e.Argumentos[i][0], e.Atributo)
+			validation, err = FormulaIgualdadTexto(e.Valor, e.Argumentos[argCont][0], e.Atributo)
+			argCont++
 		case "ValoresPosibles":
-			validation, err = ValoresPosibles(e.Valor, e.Argumentos[i], e.Atributo)
+			validation, err = ValoresPosibles(e.Valor, e.Argumentos[argCont], e.Atributo)
+			argCont++
 		case "ValidarFechaMaxima":
-			validation, err = ValidarFechaMaxima(e.Valor, e.Argumentos[i][0], e.Argumentos[i][1], e.Atributo)
+			validation, err = ValidarFechaMaxima(e.Valor, e.Argumentos[argCont][0], e.Argumentos[argCont][1], e.Atributo)
+			argCont++
 		case "ValidarFechaMinima":
-			validation, err = ValidarFechaMinima(e.Valor, e.Argumentos[i][0], e.Argumentos[i][1], e.Atributo)
+			validation, err = ValidarFechaMinima(e.Valor, e.Argumentos[argCont][0], e.Argumentos[argCont][1], e.Atributo)
+			argCont++
 		case "FormulaIgualdadNumero":
-			validation, err = FormulaIgualdadNumero(e.Valor, e.Argumentos[i][0], e.Argumentos[i][1], e.Atributo)
+			validation, err = FormulaIgualdadNumero(e.Valor, e.Argumentos[argCont][0], e.Argumentos[argCont][1], e.Atributo)
+			argCont++
 		default:
 			validation = false
 			err = fmt.Errorf("Funcion no encontrada")
