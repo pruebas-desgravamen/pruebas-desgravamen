@@ -38,38 +38,51 @@ type Poliza struct {
 }
 
 type Atributos struct {
-	Pk             string   `json:"pk"`
-	Sk             string   `json:"sk"`
-	Id             string   `json:"id"`
-	Atributo       string   `json:"atributo"`
-	TipoDato       string   `json:"tipoDato"`
-	Obligatorio    string   `json:"obligatorio"`
-	ValorUnico     string   `json:"valorUnico"`
-	Funcion        []string `json:"funcion"`
-	Origen         []string `json:"origen"`
-	Argumento      []string `json:"argumento"`
-	Dominio        []string `json:"dominio"`
-	ColumnaDestino string   `json:"columnaDestino"`
-	EntidadDestino string   `json:"entidadDestino"`
+	Pk          string   `json:"pk"`
+	Sk          string   `json:"sk"`
+	Id          string   `json:"id"`
+	Atributo    string   `json:"atributo"`
+	TipoDato    string   `json:"tipoDato"`
+	Obligatorio string   `json:"obligatorio"`
+	ValorUnico  string   `json:"valorUnico"`
+	Funcion     []string `json:"funcion"`
+	Origen      []string `json:"origen"`
+	Argumento   []string `json:"argumento"`
+	Dominio     []string `json:"dominio"`
 }
 
 type Notificaciones struct {
-	Pk           string `json:"pk"`
-	Sk           string `json:"sk"`
-	Id           string `json:"id"`
-	Evento       string `json:"evento"`
-	Correos      string `json:"correos"`
-	Aplicacion   string `json:"aplicacion"`
-	Asunto       string `json:"asunto"`
-	Destinatario string `json:"destinatario"`
-	Plantilla    string `json:"plantilla"`
-	Fase         string `json:"fase"`
+	Pk         string `json:"pk"`
+	Sk         string `json:"sk"`
+	Id         string `json:"id"`
+	Evento     string `json:"evento"`
+	Aplicacion string `json:"aplicacion"`
+	Asunto     string `json:"asunto"`
+	Plantilla  string `json:"plantilla"`
+	Fase       string `json:"fase"`
+}
+
+type Entidad struct {
+	Pk       string `json:"pk"`
+	Sk       string `json:"sk"`
+	Atributo string `json:"atributo"`
+	Origen   string `json:"origen"`
+	Valor    string `json:"valor"`
+}
+
+type Registrar struct {
+	Cliente     []Entidad `json:"cliente"`
+	Certificado []Entidad `json:"certificado"`
+	Rol         []Entidad `json:"rol"`
+	Poliza      []Entidad `json:"poliza"`
+	Credito     []Entidad `json:"credito"`
 }
 
 type Event struct {
 	DatosGenerales   DatosGenerales   `json:"datosGenerales"`
 	ColeccionPolizas []Poliza         `json:"coleccionPolizas"`
 	Lectura          []Atributos      `json:"lectura"`
+	Registrar        Registrar        `json:"registrar"`
 	Notificaciones   []Notificaciones `json:"notificaciones"`
 }
 
@@ -184,6 +197,106 @@ func handler(ctx context.Context, e Event) (string, error) {
 		if err != nil {
 			panic(fmt.Sprintf("failed 4 to put item, %v", err))
 		}
+	}
+
+	for i := 0; i < len(e.Registrar.Cliente); i++ {
+		e.Registrar.Cliente[i].Pk = "CLIENTE"
+		e.Registrar.Cliente[i].Sk = strconv.Itoa(nextIde) + "#" + e.Registrar.Cliente[i].Atributo
+
+		putItem, err := MarshalMap(e.Registrar.Cliente[i])
+		fmt.Println(putItem)
+
+		if err != nil {
+			panic(fmt.Sprintf("failed to marshal map, %v", err))
+		}
+
+		_, err = svc.PutItem(&dynamodb.PutItemInput{
+			TableName: aws.String(TABLENAME),
+			Item:      putItem,
+		})
+		if err != nil {
+			panic(fmt.Sprintf("failed 5 to put item, %v", err))
+		}
+	}
+
+	for i := 0; i < len(e.Registrar.Certificado); i++ {
+		e.Registrar.Certificado[i].Pk = "CERTIFICADO"
+		e.Registrar.Certificado[i].Sk = strconv.Itoa(nextIde) + "#" + e.Registrar.Certificado[i].Atributo
+
+		putItem, err := MarshalMap(e.Registrar.Certificado[i])
+
+		if err != nil {
+			panic(fmt.Sprintf("failed to marshal map, %v", err))
+		}
+
+		_, err = svc.PutItem(&dynamodb.PutItemInput{
+			TableName: aws.String(TABLENAME),
+			Item:      putItem,
+		})
+		if err != nil {
+			panic(fmt.Sprintf("failed 6 to put item, %v", err))
+		}
+	}
+
+	for i := 0; i < len(e.Registrar.Rol); i++ {
+		e.Registrar.Rol[i].Pk = "ROL"
+		e.Registrar.Rol[i].Sk = strconv.Itoa(nextIde) + "#" + e.Registrar.Rol[i].Atributo
+
+		putItem, err := MarshalMap(e.Registrar.Rol[i])
+
+		if err != nil {
+			panic(fmt.Sprintf("failed to marshal map, %v", err))
+		}
+
+		_, err = svc.PutItem(&dynamodb.PutItemInput{
+			TableName: aws.String(TABLENAME),
+			Item:      putItem,
+		})
+
+		if err != nil {
+			panic(fmt.Sprintf("failed 7 to put item, %v", err))
+		}
+	}
+
+	for i := 0; i < len(e.Registrar.Poliza); i++ {
+		e.Registrar.Poliza[i].Pk = "POLIZAENT"
+		e.Registrar.Poliza[i].Sk = strconv.Itoa(nextIde) + "#" + e.Registrar.Poliza[i].Atributo
+
+		putItem, err := MarshalMap(e.Registrar.Poliza[i])
+
+		if err != nil {
+			panic(fmt.Sprintf("failed to marshal map, %v", err))
+		}
+
+		_, err = svc.PutItem(&dynamodb.PutItemInput{
+			TableName: aws.String(TABLENAME),
+			Item:      putItem,
+		})
+
+		if err != nil {
+			panic(fmt.Sprintf("failed 8 to put item, %v", err))
+		}
+	}
+
+	for i := 0; i < len(e.Registrar.Credito); i++ {
+		e.Registrar.Credito[i].Pk = "CREDITO"
+		e.Registrar.Credito[i].Sk = strconv.Itoa(nextIde) + "#" + e.Registrar.Credito[i].Atributo
+
+		putItem, err := MarshalMap(e.Registrar.Credito[i])
+
+		if err != nil {
+			panic(fmt.Sprintf("failed to marshal map, %v", err))
+		}
+
+		_, err = svc.PutItem(&dynamodb.PutItemInput{
+			TableName: aws.String(TABLENAME),
+			Item:      putItem,
+		})
+
+		if err != nil {
+			panic(fmt.Sprintf("failed 9 to put item, %v", err))
+		}
+
 	}
 
 	input := &dynamodb.UpdateItemInput{
