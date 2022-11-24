@@ -244,7 +244,7 @@ func handler(e Event) (Response, error) {
 			argCont++
 		default:
 			validation = false
-			err = fmt.Errorf("Funcion no encontrada")
+			err = fmt.Errorf("funcion no encontrada")
 		}
 
 		if err != nil {
