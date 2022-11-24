@@ -37,10 +37,10 @@ Resources:
                   - dynamodb:Query
                   - dynamodb:Scan
                 Resource: 
-                  - !GetAtt DB.Arn
+                  - !GetAtt DBTramas.Arn
                   - !Sub 
                     - "${Table}/index/*"
-                    - { Table: !GetAtt DB.Arn }
+                    - { Table: !GetAtt DBTramas.Arn }
               - Effect: Allow
                 Action:
                 - lambda:invokeFunction
@@ -78,7 +78,7 @@ Resources:
       Type: AMAZON_DYNAMODB
       ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
       DynamoDBConfig:
-        TableName: !Ref DB
+        TableName: !Ref DBTramas
         AwsRegion: !Sub ${AWS::Region}
 
    # AppSync Data Source for StepFunction
@@ -220,7 +220,7 @@ Resources:
       Type: EXPRESS
       Name: upload-file
       DefinitionSubstitutions:  
-        TableName: !Ref DB
+        TableName: !Ref DBTramas
         FirstServCargaFunctionArn: !GetAtt FirstServCargaFunction.Arn
         InFunctionArn: !GetAtt InFunction.Arn
       Logging:
@@ -235,7 +235,7 @@ Resources:
         - LambdaInvokePolicy:
             FunctionName: !Ref InFunction
         - DynamoDBCrudPolicy:
-            TableName: !Ref DB 
+            TableName: !Ref DBTramas
         - CloudWatchLogsFullAccess
 
   ValidationsStateMachine:
@@ -306,21 +306,6 @@ Resources:
  ###############      
  ## DynamoDB  ##
  ############### 
-  DB:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: Tramas
-      AttributeDefinitions:
-        - AttributeName: pk
-          AttributeType: S
-        - AttributeName: sk
-          AttributeType: S        
-      KeySchema:
-        - AttributeName: pk
-          KeyType: HASH
-        - AttributeName: sk
-          KeyType: RANGE
-      BillingMode: PAY_PER_REQUEST
 
   DBTramas:
     Type: AWS::DynamoDB::Table
@@ -412,11 +397,11 @@ Resources:
       Environment:
         Variables:
           BUCKET_NAME: !Ref DataBucket
-          TABLA_NAME: !Ref DB
+          TABLA_NAME: !Ref DBTramas
           REGION: !Sub ${AWS::Region}
       Policies: 
         - DynamoDBCrudPolicy:
-            TableName: !Ref DB
+            TableName: !Ref DBTramas
         - AWSLambdaBasicExecutionRole
         - S3ReadPolicy:
             BucketName: !Ref DataBucket
@@ -531,10 +516,10 @@ Resources:
       Timeout: 5
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Ref DB
+            TableName: !Ref DBTramas
       Environment:
         Variables:
-          DB: !Ref DB
+          DBTramas: !Ref DBTramas
 
 
  #############################

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
@@ -11,15 +12,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 )
 
 type Input struct {
 	Input CargaEvent `json:"input"`
-}
-
-type CantidadProcesos struct {
-	Cantidad int `json:"cantidad"`
 }
 
 type CargaEvent struct {
@@ -33,6 +29,9 @@ type CargaEvent struct {
 	RUC                string `json:"ruc"`
 }
 
+type Numerator struct {
+	IdConfigurador int `json:"idConfigurador"`
+}
 type Carga struct {
 	Pk                 string `json:"pk"`
 	Sk                 string `json:"sk"`
@@ -50,7 +49,7 @@ type Carga struct {
 
 func handler(ctx context.Context, event Input) (string, error) {
 
-	TABLE_NAME := os.Getenv("DB")
+	TABLE_NAME_TRAMAS := os.Getenv("DBTramas")
 
 	sess, err := session.NewSession(&aws.Config{})
 	if err != nil {
@@ -59,59 +58,75 @@ func handler(ctx context.Context, event Input) (string, error) {
 
 	svc := dynamodb.New(sess)
 
-	keyCond := expression.KeyAnd(
-		expression.Key("pk").Equal(expression.Value("CONTADOR")),
-		expression.Key("sk").BeginsWith("IdProceso"),
-	)
+	itemIdConfigurador, _ := svc.GetItem(&dynamodb.GetItemInput{
+		TableName: aws.String(TABLE_NAME_TRAMAS),
+		Key: map[string]*dynamodb.AttributeValue{
+			"pk": {
+				S: aws.String("NUMERATOR"),
+			},
+			"sk": {
+				S: aws.String("NUMERATOR"),
+			},
+		},
+	})
+	cont := Numerator{}
+	_ = dynamodbattribute.UnmarshalMap(itemIdConfigurador.Item, &cont)
 
-	proj := expression.NamesList(expression.Name("cantidad"))
+	nextIdConfigurador := cont.IdConfigurador + 1
 
-	expr, err := expression.NewBuilder().
-		WithKeyCondition(keyCond).
-		WithProjection(proj).
-		Build()
-	if err != nil {
-		fmt.Println(err)
-	}
+	// keyCond := expression.KeyAnd(
+	// 	expression.Key("pk").Equal(expression.Value("CONTADOR")),
+	// 	expression.Key("sk").BeginsWith("IdProceso"),
+	// )
 
-	inputQuery := &dynamodb.QueryInput{
-		ExpressionAttributeNames:  expr.Names(),
-		ExpressionAttributeValues: expr.Values(),
-		KeyConditionExpression:    expr.KeyCondition(),
-		ProjectionExpression:      expr.Projection(),
-		TableName:                 aws.String(TABLE_NAME),
-	}
+	// proj := expression.NamesList(expression.Name("cantidad"))
 
-	result, _ := svc.Query(inputQuery)
-
-	// lastIdProcesoInput := &dynamodb.QueryInput{
-	// 	// KeyConditions: map[string]*dynamodb.Condition{
-	// 	// 	"poliza": {
-	// 	// 		ComparisonOperator: aws.String("EQ"),
-	// 	// 		AttributeValueList: []*dynamodb.AttributeValue{
-	// 	// 			{
-	// 	// 				S: aws.String("81"),
-	// 	// 			},
-	// 	// 		},
-	// 	// 	},
-	// 	// },
-	// 	KeyConditionExpression: &keyCond,
-	// 	TableName:              aws.String(TABLE_NAME),
+	// expr, err := expression.NewBuilder().
+	// 	WithKeyCondition(keyCond).
+	// 	WithProjection(proj).
+	// 	Build()
+	// if err != nil {
+	// 	fmt.Println(err)
 	// }
-	// resp, _ := svc.Query(lastIdProcesoInput)
 
-	// personObj := []Carga{}
-	// _ = dynamodbattribute.UnmarshalListOfMaps(resp.Items, &personObj)
+	// inputQuery := &dynamodb.QueryInput{
+	// 	ExpressionAttributeNames:  expr.Names(),
+	// 	ExpressionAttributeValues: expr.Values(),
+	// 	KeyConditionExpression:    expr.KeyCondition(),
+	// 	ProjectionExpression:      expr.Projection(),
+	// 	TableName:                 aws.String(TABLE_NAME),
+	// }
 
-	// fmt.Println("separacion")
-	items := []CantidadProcesos{}
+	// result, _ := svc.Query(inputQuery)
 
-	cantidad := dynamodbattribute.UnmarshalListOfMaps(result.Items, &items)
-	fmt.Print(cantidad)
+	// // lastIdProcesoInput := &dynamodb.QueryInput{
+	// // 	// KeyConditions: map[string]*dynamodb.Condition{
+	// // 	// 	"poliza": {
+	// // 	// 		ComparisonOperator: aws.String("EQ"),
+	// // 	// 		AttributeValueList: []*dynamodb.AttributeValue{
+	// // 	// 			{
+	// // 	// 				S: aws.String("81"),
+	// // 	// 			},
+	// // 	// 		},
+	// // 	// 	},
+	// // 	// },
+	// // 	KeyConditionExpression: &keyCond,
+	// // 	TableName:              aws.String(TABLE_NAME),
+	// // }
+	// // resp, _ := svc.Query(lastIdProcesoInput)
+
+	// // personObj := []Carga{}
+	// // _ = dynamodbattribute.UnmarshalListOfMaps(resp.Items, &personObj)
+
+	// // fmt.Println("separacion")
+	// items := []CantidadProcesos{}
+
+	// cantidad := dynamodbattribute.UnmarshalListOfMaps(result.Items, &items)
+	// fmt.Print(cantidad)
 
 	carga := &Carga{
-		Pk:                 "TRAMA",
-		Sk:                 event.Input.Poliza,
+		Pk:                 strconv.Itoa(nextIdConfigurador),
+		Sk:                 "PROCESO",
 		Tipo:               event.Input.Tipo,
 		Poliza:             event.Input.Poliza,
 		Contratante:        event.Input.Contratante,
@@ -124,24 +139,23 @@ func handler(ctx context.Context, event Input) (string, error) {
 		Hora:               getHora(),
 	}
 
-	item, err := MarshalMap(carga)
+	itemCarga, err := MarshalMap(carga)
 	if err != nil {
 		fmt.Println("error on marshal")
 		return "Error on marshal", err
 	}
 
-	inputPut := &dynamodb.PutItemInput{
-		Item:      item,
-		TableName: aws.String(TABLE_NAME),
+	inputPutCarga := &dynamodb.PutItemInput{
+		Item:      itemCarga,
+		TableName: aws.String(TABLE_NAME_TRAMAS),
 	}
 
-	_, err = svc.PutItem(inputPut)
+	_, err = svc.PutItem(inputPutCarga)
 	if err != nil {
 		fmt.Println("error on putitem")
 		return "error on putitem", err
 	}
 
-	// fmt.Println(carga)
 	return "Succes", nil
 }
 

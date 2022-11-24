@@ -1,0 +1,11 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "desgravamen-grupal"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-1rfna91egqxnj"
+s3_prefix = "desgravamen-grupal"
+region = "us-east-1"
+profile = "desgravamen"
+capabilities = "CAPABILITY_IAM"
+image_repositories = []

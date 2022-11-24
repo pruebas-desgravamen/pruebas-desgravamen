@@ -2,4 +2,3 @@
 *.mod
 /.aws-sam
 /.vscode
-samconfig.toml
