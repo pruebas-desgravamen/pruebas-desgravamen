@@ -157,7 +157,7 @@ func handler(ctx context.Context, ev Evento) ([][]RegistroAtributoValorFuncionAr
 	for columnaContador := 0; columnaContador < len(queryResponse); columnaContador++ {
 		if columnas[columnaContador] == queryResponse[columnaContador].Atributo {
 			fmt.Println(columnas[columnaContador])
-			fmt.Println("ok")
+			fmt.Println("okay: true")
 		} else {
 			fmt.Println("error")
 		}

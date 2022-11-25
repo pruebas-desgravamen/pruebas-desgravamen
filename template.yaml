@@ -275,6 +275,7 @@ Resources:
       DefinitionSubstitutions:
         ValidationFunctionArn: !GetAtt ValidationFunction.Arn
         TransformXSLFunctionArn: !GetAtt TransformXSLFunction.Arn
+        TransformXSLArrayRegistriesFunctionArn: !GetAtt TransformXSLArrayRegistriesFunction.Arn
       Logging:
         Destinations:
           - CloudWatchLogsLogGroup:
@@ -286,6 +287,8 @@ Resources:
             FunctionName: !Ref ValidationFunction
         - LambdaInvokePolicy:
             FunctionName: !Ref TransformXSLFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref TransformXSLArrayRegistriesFunction
         - CloudWatchLogsFullAccess
       Events:
         EBRule:
@@ -376,12 +379,50 @@ Resources:
           - AttributeName: nPoliza
             KeyType: RANGE
         Projection:
-          ProjectionType: ALL
+          ProjectionType: ALL ##CAMBIARRR
 
 
  ###############      
  ## Functions ##
  ###############  
+
+  # SplitChunksCSV
+  SplitChunksCSVFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./functions/split-chunks-csv
+      Handler: handler
+      Runtime: go1.x
+      MemorySize: 2048 
+      Timeout: 300
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref DataBucket
+          TABLA_NAME_TRAMAS: !Ref DBTramas
+          TABLA_NAME_CONFIGURADOR: !Ref DBConfigurador
+          REGION: !Sub ${AWS::Region}
+      Policies: 
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DBTramas
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DBConfigurador
+        - AWSLambdaBasicExecutionRole
+        - S3ReadPolicy:
+            BucketName: !Ref DataBucket
+      Events:
+        EBRule:
+          Type: EventBridgeRule
+          Properties:
+            InputPath: "$.detail"
+            Pattern:
+              detail:
+                bucket:
+                  name:
+                    - !Ref DataBucket                
+              detail-type:
+                - "Object Created"
+              source:
+                - aws.s3 
 
   # GUARDAR CONFIGURACION
   SaveStructureFunction:
@@ -425,28 +466,31 @@ Resources:
       Environment:
         Variables:
           BUCKET_NAME: !Ref DataBucket
-          TABLA_NAME: !Ref DBTramas
+          TABLA_NAME_TRAMAS: !Ref DBTramas
+          TABLA_NAME_CONFIGURADOR: !Ref DBConfigurador
           REGION: !Sub ${AWS::Region}
       Policies: 
         - DynamoDBCrudPolicy:
             TableName: !Ref DBTramas
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DBConfigurador
         - AWSLambdaBasicExecutionRole
         - S3ReadPolicy:
             BucketName: !Ref DataBucket
-      Events:
-        EBRule:
-          Type: EventBridgeRule
-          Properties:
-            InputPath: "$.detail"
-            Pattern:
-              detail:
-                bucket:
-                  name:
-                    - !Ref DataBucket                
-              detail-type:
-                - "Object Created"
-              source:
-                - aws.s3 
+      # Events:
+      #   EBRule:
+      #     Type: EventBridgeRule
+      #     Properties:
+      #       InputPath: "$.detail"
+      #       Pattern:
+      #         detail:
+      #           bucket:
+      #             name:
+      #               - !Ref DataBucket                
+      #         detail-type:
+      #           - "Object Created"
+      #         source:
+      #           - aws.s3 
 
   TransformXSLFunction:         
     Type: AWS::Serverless::Function
@@ -483,7 +527,44 @@ Resources:
       #         detail-type:
       #           - "Object Created"
       #         source:
-      #           - aws.s3 
+      #           - aws.s3
+ 
+  TransformXSLArrayRegistriesFunction:         
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/transform-xsl-array-registries
+      Handler: test-transform-xsl
+      Runtime: go1.x
+      MemorySize: 2048 
+      Timeout: 300
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref DataBucket
+          TABLA_NAME_TRAMAS: !Ref DBTramas
+          TABLA_NAME_CONFIGURADOR: !Ref DBConfigurador
+          REGION: !Sub ${AWS::Region}
+      Policies: 
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DBTramas
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DBConfigurador
+        - AWSLambdaBasicExecutionRole
+        - S3ReadPolicy:
+            BucketName: !Ref DataBucket
+      Events:
+        EBRule:
+          Type: EventBridgeRule
+          Properties:
+            InputPath: "$.detail"
+            Pattern:
+              detail:
+                bucket:
+                  name:
+                    - !Ref DataBucket                
+              detail-type:
+                - "Object Created"
+              source:
+                - aws.s3 
 
   GagaFunction:         
     Type: AWS::Serverless::Function
