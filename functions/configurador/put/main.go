@@ -38,52 +38,52 @@ type Poliza struct {
 }
 
 type Atributos struct {
-	Pk             string   `json:"pk"`
-	Sk             string   `json:"sk"`
-	Id             string   `json:"id"`
-	Atributo       string   `json:"atributo"`
-	TipoDato       string   `json:"tipoDato"`
-	Obligatorio    string   `json:"obligatorio"`
-	ValorUnico     string   `json:"valorUnico"`
-	Funcion        []string `json:"funcion"`
-	Origen         []string `json:"origen"`
-	Argumento      []string `json:"argumento"`
-	Dominio        []string `json:"dominio"`
+	Pk          string   `json:"pk"`
+	Sk          string   `json:"sk"`
+	Id          string   `json:"id"`
+	Atributo    string   `json:"atributo"`
+	TipoDato    string   `json:"tipoDato"`
+	Obligatorio string   `json:"obligatorio"`
+	ValorUnico  string   `json:"valorUnico"`
+	Funcion     []string `json:"funcion"`
+	Origen      []string `json:"origen"`
+	Argumento   []string `json:"argumento"`
+	Dominio     []string `json:"dominio"`
 }
 
 type Notificaciones struct {
-	Pk           string `json:"pk"`
-	Sk           string `json:"sk"`
-	Id           string `json:"id"`
-	Evento       string `json:"evento"`
-	Aplicacion   string `json:"aplicacion"`
-	Asunto       string `json:"asunto"`
-	Plantilla    string `json:"plantilla"`
-	Fase         string `json:"fase"`
+	Pk         string `json:"pk"`
+	Sk         string `json:"sk"`
+	Id         string `json:"id"`
+	Evento     string `json:"evento"`
+	Aplicacion string `json:"aplicacion"`
+	Asunto     string `json:"asunto"`
+	Plantilla  string `json:"plantilla"`
+	Fase       string `json:"fase"`
 }
 
 type Entidad struct {
-	Pk string `json:"pk"`
-	Sk string `json:"sk"`
+	Pk       string `json:"pk"`
+	Sk       string `json:"sk"`
 	Atributo string `json:"atributo"`
-	Origen string `json:"origen"`
-	Valor string `json:"valor"`
+	Origen   string `json:"origen"`
+	Valor    string `json:"valor"`
 }
 
 type Registrar struct {
-	Cliente []Entidad `json:"cliente"`
+	Cliente     []Entidad `json:"cliente"`
 	Certificado []Entidad `json:"certificado"`
-	Rol []Entidad `json:"rol"`
-	Poliza []Entidad `json:"poliza"`
-	Credito []Entidad `json:"credito"`
+	Rol         []Entidad `json:"rol"`
+	Poliza      []Entidad `json:"poliza"`
+	Credito     []Entidad `json:"credito"`
 }
 
 type Configuracion struct {
-	DatosGenerales DatosGenerales `json:"datosGenerales"`
-	ColeccionPolizas []Poliza `json:"coleccionPolizas"`
-	Lectura []Atributos `json:"lectura"`
-	Registrar Registrar `json:"registrar"`
-	Notificaciones []Notificaciones `json:"notificaciones"`
+	DatosGenerales   DatosGenerales   `json:"datosGenerales"`
+	ColeccionPolizas []Poliza         `json:"coleccionPolizas"`
+	Lectura          []Atributos      `json:"lectura"`
+	Registrar        Registrar        `json:"registrar"`
+	Notificaciones   []Notificaciones `json:"notificaciones"`
 }
 
 type ConfigEvent struct {
@@ -118,7 +118,6 @@ func handler(ctx context.Context, config ConfigEvent) (string, error) {
 	var registrarPolizaItem map[string]*dynamodb.AttributeValue
 	var registrarCreditoItem map[string]*dynamodb.AttributeValue
 
-
 	var batchItems []*dynamodb.WriteRequest
 
 	item, _ := svc.GetItem(&dynamodb.GetItemInput{
@@ -146,7 +145,7 @@ func handler(ctx context.Context, config ConfigEvent) (string, error) {
 	e.DatosGenerales.Sk = strconv.Itoa(nextIde)
 
 	datosGeneralesItem, err := MarshalMap(e.DatosGenerales)
-	
+
 	batchItems = append(batchItems, &dynamodb.WriteRequest{
 		PutRequest: &dynamodb.PutRequest{
 			Item: datosGeneralesItem,
@@ -168,7 +167,14 @@ func handler(ctx context.Context, config ConfigEvent) (string, error) {
 
 	for i := 0; i < len(e.Lectura); i++ {
 		e.Lectura[i].Pk = strconv.Itoa(nextIde)
-		e.Lectura[i].Sk = strconv.Itoa(i + 1)
+
+		if i+1 < 10 {
+			e.Lectura[i].Sk = "00" + strconv.Itoa(i+1)
+		} else if i+1 < 100 {
+			e.Lectura[i].Sk = "0" + strconv.Itoa(i+1)
+		} else {
+			e.Lectura[i].Sk = strconv.Itoa(i + 1)
+		}
 
 		lecturaItem, err = MarshalMap(e.Lectura[i])
 
@@ -192,7 +198,6 @@ func handler(ctx context.Context, config ConfigEvent) (string, error) {
 			},
 		})
 
-
 	}
 
 	for i := 0; i < len(e.Registrar.Cliente); i++ {
@@ -207,7 +212,6 @@ func handler(ctx context.Context, config ConfigEvent) (string, error) {
 			},
 		})
 
-
 	}
 
 	for i := 0; i < len(e.Registrar.Certificado); i++ {
@@ -221,13 +225,13 @@ func handler(ctx context.Context, config ConfigEvent) (string, error) {
 				Item: registrarCertificadoItem,
 			},
 		})
-		
+
 	}
 
 	for i := 0; i < len(e.Registrar.Rol); i++ {
 		e.Registrar.Rol[i].Pk = "ROL"
 		e.Registrar.Rol[i].Sk = strconv.Itoa(nextIde) + "#" + e.Registrar.Rol[i].Atributo
-		
+
 		registrarRolItem, err = MarshalMap(e.Registrar.Rol[i])
 
 		batchItems = append(batchItems, &dynamodb.WriteRequest{
@@ -235,7 +239,6 @@ func handler(ctx context.Context, config ConfigEvent) (string, error) {
 				Item: registrarRolItem,
 			},
 		})
-
 
 	}
 
@@ -250,7 +253,6 @@ func handler(ctx context.Context, config ConfigEvent) (string, error) {
 				Item: registrarPolizaItem,
 			},
 		})
-
 
 	}
 
@@ -268,15 +270,27 @@ func handler(ctx context.Context, config ConfigEvent) (string, error) {
 
 	}
 
-	out ,_:= svc.BatchWriteItem(&dynamodb.BatchWriteItemInput{
-		RequestItems: map[string][]*dynamodb.WriteRequest{
-			TABLENAME: batchItems,
-		},
-	})
+	chunkSize := 10
 
-	if out.UnprocessedItems != nil {
-		fmt.Println("Unprocessed items")
-	}	
+	for i := 0; i < len(batchItems); i += chunkSize {
+		end := i + chunkSize
+
+		if end > len(batchItems) {
+			end = len(batchItems)
+		}
+
+		batch := batchItems[i:end]
+
+		out, _ := svc.BatchWriteItem(&dynamodb.BatchWriteItemInput{
+			RequestItems: map[string][]*dynamodb.WriteRequest{
+				TABLENAME: batch,
+			},
+		})
+
+		if out.UnprocessedItems != nil {
+			fmt.Println("Unprocessed items")
+		}
+	}
 
 	input := &dynamodb.UpdateItemInput{
 		TableName: aws.String(TABLENAME),
