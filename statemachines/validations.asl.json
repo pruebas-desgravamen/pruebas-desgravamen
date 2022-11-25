@@ -4,7 +4,7 @@
   "States": {
     "Recibir Estructura":{
       "Type": "Task",
-      "Resource": "${TransformXSLFunctionArn}",
+      "Resource": "${TransformXSLArrayRegistriesFunctionArn}",
       "OutputPath": "$",
       "Next": "MapState"
     },
