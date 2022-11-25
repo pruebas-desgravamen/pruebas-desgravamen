@@ -181,84 +181,83 @@ type Event struct {
 }
 
 type FuncError struct {
-	Funcion string
-	Error   string
+	Registro int    `json:"registro"`
+	Atributo string `json:"atributo"`
+	Funcion  string
+	Error    string
+}
+
+type FuncValidation struct {
+	Registro int    `json:"registro"`
+	Atributo string `json:"atributo"`
+	Funcion  string
+	Valid    bool `json:"valid"`
 }
 
 type Response struct {
-	Registro int         `json:"registro"`
-	Atributo string      `json:"atributo"`
-	Valido   bool        `json:"valido"`
-	Errores  []FuncError `json:"errores"`
+	Valido  bool        `json:"valido"`
+	Errores []FuncError `json:"errores"`
 }
 
-func handler(e Event) (Response, error) {
+func handler(eventArray []Event) (Response, error) {
 
 	var errores []FuncError
-	var validaciones []bool
-	argCont := 0
+	var validaciones []FuncValidation
+	for _, e := range eventArray {
 
-	for i := 0; i < len(e.Funcion); i++ {
-		var validation bool
-		var err error
+		for i := 0; i < len(e.Funcion); i++ {
+			var validation bool
+			var err error
 
-		switch e.Funcion[i] {
-		case "ValidarNumero":
-			validation, err = ValidarNumero(e.Valor, e.Atributo)
-		case "LongitudMaxima":
-			validation, err = LongitudMaxima(e.Valor, e.Argumentos[argCont][0], e.Atributo)
-			argCont++
-		case "LongitudMinima":
-			validation, err = LongitudMinima(e.Valor, e.Argumentos[argCont][0], e.Atributo)
-			argCont++
-		case "ValidarFormatoFecha":
-			validation, err = ValidarFormatoFecha(e.Valor, e.Argumentos[argCont][0], e.Atributo)
-			argCont++
-		case "ValidarNull":
-			validation, err = ValidarNull(e.Valor, e.Atributo)
-		case "ValorMaximo":
-			validation, err = ValorMaximo(e.Valor, e.Argumentos[argCont][0], e.Atributo)
-			argCont++
-		case "ValorMinimo":
-			validation, err = ValorMinimo(e.Valor, e.Argumentos[argCont][0], e.Atributo)
-			argCont++
-		case "ValidarCaracteresEspeciales":
-			validation, err = ValidarCaracteresEspeciales(e.Valor, e.Atributo)
-		case "ValidarDocumento":
-			validation, err = ValidarDocumento(e.Valor, e.Argumentos[argCont][0], e.Atributo)
-			argCont++
-		case "FormulaIgualdadTexto":
-			validation, err = FormulaIgualdadTexto(e.Valor, e.Argumentos[argCont][0], e.Atributo)
-			argCont++
-		case "ValoresPosibles":
-			validation, err = ValoresPosibles(e.Valor, e.Argumentos[argCont], e.Atributo)
-			argCont++
-		case "ValidarFechaMaxima":
-			validation, err = ValidarFechaMaxima(e.Valor, e.Argumentos[argCont][0], e.Argumentos[argCont][1], e.Atributo)
-			argCont++
-		case "ValidarFechaMinima":
-			validation, err = ValidarFechaMinima(e.Valor, e.Argumentos[argCont][0], e.Argumentos[argCont][1], e.Atributo)
-			argCont++
-		case "FormulaIgualdadNumero":
-			validation, err = FormulaIgualdadNumero(e.Valor, e.Argumentos[argCont][0], e.Argumentos[argCont][1], e.Atributo)
-			argCont++
-		default:
-			validation = false
-			err = fmt.Errorf("funcion no encontrada")
+			switch e.Funcion[i] {
+			case "ValidarNumero":
+				validation, err = ValidarNumero(e.Valor, e.Atributo)
+			case "LongitudMaxima":
+				validation, err = LongitudMaxima(e.Valor, e.Argumentos[i][0], e.Atributo)
+			case "LongitudMinima":
+				validation, err = LongitudMinima(e.Valor, e.Argumentos[i][0], e.Atributo)
+			case "ValidarFormatoFecha":
+				validation, err = ValidarFormatoFecha(e.Valor, e.Argumentos[i][0], e.Atributo)
+			case "ValidarNull":
+				validation, err = ValidarNull(e.Valor, e.Atributo)
+			case "ValorMaximo":
+				validation, err = ValorMaximo(e.Valor, e.Argumentos[i][0], e.Atributo)
+			case "ValorMinimo":
+				validation, err = ValorMinimo(e.Valor, e.Argumentos[i][0], e.Atributo)
+			case "ValidarCaracteresEspeciales":
+				validation, err = ValidarCaracteresEspeciales(e.Valor, e.Atributo)
+			case "ValidarDocumento":
+				validation, err = ValidarDocumento(e.Valor, e.Argumentos[i][0], e.Atributo)
+			case "FormulaIgualdadTexto":
+				validation, err = FormulaIgualdadTexto(e.Valor, e.Argumentos[i][0], e.Atributo)
+			case "ValoresPosibles":
+				validation, err = ValoresPosibles(e.Valor, e.Argumentos[i], e.Atributo)
+			case "ValidarFechaMaxima":
+				validation, err = ValidarFechaMaxima(e.Valor, e.Argumentos[i][0], e.Argumentos[i][1], e.Atributo)
+			case "ValidarFechaMinima":
+				validation, err = ValidarFechaMinima(e.Valor, e.Argumentos[i][0], e.Argumentos[i][1], e.Atributo)
+			case "FormulaIgualdadNumero":
+				validation, err = FormulaIgualdadNumero(e.Valor, e.Argumentos[i][0], e.Argumentos[i][1], e.Atributo)
+			default:
+				validation = false
+				err = fmt.Errorf("Funcion no encontrada")
+			}
+
+			if err != nil {
+				errores = append(errores, FuncError{Registro: e.Registro, Atributo: e.Atributo, Funcion: e.Funcion[i], Error: err.Error()})
+			}
+			validaciones = append(validaciones, FuncValidation{Registro: e.Registro, Atributo: e.Atributo, Funcion: e.Funcion[i], Valid: validation})
 		}
 
-		if err != nil {
-			errores = append(errores, FuncError{Funcion: e.Funcion[i], Error: err.Error()})
-		}
-		validaciones = append(validaciones, validation)
 	}
 
-	for i := 0; i < len(validaciones); i++ {
-		if !validaciones[i] {
-			return Response{Registro: e.Registro, Atributo: e.Atributo, Valido: false, Errores: errores}, nil
-		}
+	fmt.Println(validaciones)
+
+	if len(errores) > 0 {
+		return Response{Valido: false, Errores: errores}, nil
 	}
-	return Response{Registro: e.Registro, Atributo: e.Atributo, Valido: true, Errores: errores}, nil
+
+	return Response{Valido: true, Errores: errores}, nil
 }
 
 func main() {
