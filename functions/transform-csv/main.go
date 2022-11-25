@@ -15,10 +15,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-type Sdn struct {
-	Id       string `json:"id"`
-	Number   string `json:"number"`
-	Footnote string `json:"footnote"`
+type QueryConfiguradorResponse struct {
+	Atributo  string   `json:"atributo"`
+	Funcion   []string `json:"funcion"`
+	Argumento []string `json:"argumento"`
 }
 
 type Iobject struct {
@@ -33,10 +33,9 @@ type Evento struct {
 
 func Handler(ctx context.Context, ev Evento) (string, error) {
 
-	var TABLE_NAME = os.Getenv("TABLA_NAME")
+	var TABLE_NAME_CONFIGURADOR = os.Getenv("TABLA_NAME_CONFIGURADOR")
 	var BUCKET_NAME = os.Getenv("BUCKET_NAME")
 	var OBJECT_NAME = ev.Object.Key
-	var sdn Sdn
 
 	//Iniciar sesion en aws
 	sess, err := session.NewSession(&aws.Config{
@@ -49,6 +48,28 @@ func Handler(ctx context.Context, ev Evento) (string, error) {
 
 	svcDynamo := dynamodb.New(sess) // Dynamodb
 	svcS3 := s3.New(sess)           // s3
+
+	// Query to know the functions, atributes and arguments that will be applied to their respective columns
+	inputQueryConfigurador := dynamodb.QueryInput{
+		TableName:              aws.String(TABLE_NAME_CONFIGURADOR),
+		KeyConditionExpression: aws.String("pk=:pk"),
+		ExpressionAttributeNames: map[string]*string{
+			"#atributo":  aws.String("atributo"),
+			"#funcion":   aws.String("funcion"),
+			"#argumento": aws.String("argumento"),
+		},
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":pk": {S: aws.String("1")},
+		},
+		ProjectionExpression: aws.String("#funcion, #atributo, #argumento"),
+	}
+
+	queryConfigurador, _ := svcDynamo.Query(&inputQueryConfigurador)
+
+	queryResponse := []QueryConfiguradorResponse{}
+	_ = dynamodbattribute.UnmarshalListOfMaps(queryConfigurador.Items, &queryResponse)
+
+	// Get file from S3
 
 	file, err := svcS3.GetObject(
 		&s3.GetObjectInput{
@@ -66,49 +87,27 @@ func Handler(ctx context.Context, ev Evento) (string, error) {
 
 	reqBody := strings.Split(result, "\n")
 
-	print(" ------------ ")
+	fmt.Println(" ------------ ")
 
-	fmt.Print(reqBody)
-	fmt.Print("\n")
+	fmt.Println(reqBody)
 
 	for i := range reqBody {
 		// reemplazar -0- por vacio, eliminar \n
-		reqBody[i] = strings.Replace(reqBody[i], "-0- ", "", -1)
-		reqBody[i] = strings.TrimRight(reqBody[i], "\r\n")
+		// reqBody[i] = strings.Replace(reqBody[i], "-0- ", "", -1)
+		// reqBody[i] = strings.TrimRight(reqBody[i], "\r\n")
 
-		fmt.Print(reqBody[i])
-		print("\n")
+		// prints a registry
+		fmt.Println(reqBody[i])
 
-		// singleData is a row
+		// prints columns per registry
 		singleData := strings.Split(reqBody[i], ",")
-		if len(singleData) == 2 {
-			// convertir a int
-			if err != nil {
-				fmt.Println(err.Error())
-				return "", err
-			}
 
-			sdn = Sdn{
-				Id:       "Trama",
-				Number:   strings.Trim(singleData[0], "\""),
-				Footnote: strings.Trim(singleData[1], "\""),
-			}
-			data, err := MarshalMap(sdn)
-			if err != nil {
-				fmt.Println(err.Error())
-				return "", err
-			}
-			params := &dynamodb.PutItemInput{
-				Item:      data,
-				TableName: aws.String(TABLE_NAME),
-			}
-			_, err2 := svcDynamo.PutItem(params)
-			if err2 != nil {
-				fmt.Println(err2.Error())
-				return "", err2
-			}
+		for j := range singleData {
+			fmt.Println(singleData[j])
+			fmt.Println("---")
 		}
 	}
+
 	result = "Sucess"
 	return result, nil
 }
