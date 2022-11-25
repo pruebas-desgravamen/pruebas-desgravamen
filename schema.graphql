@@ -65,14 +65,88 @@ type CargaDashboard {
   userCode: String
 }
 
+
 type ShowDashboardOutput{
   cargas:  [CargaDashboard]
   nextToken: String
 }
 
+
+
+#-------------- CONFIGURACION ----------------
+input DatosGeneralesInput{
+
+  nombreEstructura: String!
+  transaccion: String!
+  ramo: String!
+  datosCabecera: String!
+  certificadoPorRol: String!
+  filasOrdenadasPorRol: String!
+  formatoArchivo: String!
+}
+
+
+input PolizaInput{
+
+  producto: String!
+  nPoliza: String!
+  contratante: String!
+  canalVenta: String!
+  vigencia: String!
+  moneda: String!
+  reglas: [Int]!
+}
+
+input AtributosInput{
+
+  id: String!
+  atributo: String!
+  tipoDato: String!
+  obligatorio: String!
+  valorUnico: String!
+  funcion: [String]!
+  origen: [String]!
+  argumento: [String]!
+  dominio: [String]!
+}
+
+input NotificacionesInput{
+
+  id: String!
+  evento: String!
+  aplicacion: String!
+  asunto: String!
+  plantilla: String!
+  fase: String!
+}
+
+input EntidadInput{
+
+  atributo: String!
+  origen: String!
+  valor: String!
+}
+
+input RegistrarInput{
+  cliente: [EntidadInput]!
+  certificado: [EntidadInput]!
+  rol: [EntidadInput]!
+  poliza: [EntidadInput]!
+  credito: [EntidadInput]!
+}
+
+input EventInput {
+  datosGenerales: DatosGeneralesInput
+  coleccionPolizas: [PolizaInput]
+  lectura: [AtributosInput]
+  registrar: RegistrarInput
+  notificaciones: [NotificacionesInput]
+}
+
 type Mutation {
   uploadFile(input: InputCargaDashboard, filename: String): String
   firstServCarga(input: InputCargaDashboard): String
+  saveStructure(event: EventInput): String
   # validations(validations: InputValidations ): String
 }
 

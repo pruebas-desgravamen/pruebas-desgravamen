@@ -46,6 +46,7 @@ Resources:
                 - lambda:invokeFunction
                 Resource: 
                   - !GetAtt FirstServCargaFunction.Arn
+                  - !GetAtt SaveStructureFunction.Arn
 
   AppSyncApi:
     DependsOn: AppSyncServiceRole
@@ -97,6 +98,16 @@ Resources:
           AwsIamConfig:
             SigningRegion: !Ref AWS::Region
             SigningServiceName: states
+
+  SaveStructureDataSource:
+    Type: "AWS::AppSync::DataSource"
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      Name: SaveStructure
+      Type: AWS_LAMBDA
+      ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
+      LambdaConfig:
+        LambdaFunctionArn: !GetAtt SaveStructureFunction.Arn
  ###############      
  ## DATA SOURCE ##
  ###############  
@@ -209,6 +220,23 @@ Resources:
           }
         }
       ResponseMappingTemplate: $util.parseJson($ctx.result.body).output
+
+  SaveStructureResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Mutation
+      FieldName: saveStructure
+      DataSourceName: !GetAtt SaveStructureDataSource.Name
+      RequestMappingTemplate: !Sub >
+        {
+          "version": "2017-02-28",
+          "operation": "Invoke",
+          "payload": {
+            "event": $utils.toJson($context.args.event)
+          }
+        }
+      ResponseMappingTemplate: $util.toJson($context.result)
 
  ###################      
  ## STATEMACHINES ##
@@ -356,7 +384,7 @@ Resources:
  ###############  
 
   # GUARDAR CONFIGURACION
-  SaveStructure:
+  SaveStructureFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: ./functions/configurador/put
