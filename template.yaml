@@ -28,6 +28,7 @@ Resources:
                   - !Ref UploadFileStateMachine
                   # - !Ref ValidateCellStateMachine
                   - !Ref ValidationsStateMachine
+                  - !Ref FirstServStateMachine
               - Effect: Allow
                 Action:
                   - dynamodb:GetItem
@@ -305,6 +306,19 @@ Resources:
               source:
                 - aws.s3 
 
+  FirstServStateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      DefinitionUri: statemachines/first_serv_carga.asl.json
+      Type: EXPRESS
+      Name: firstServStateMachine
+      DefinitionSubstitutions:
+        DDBUpdateItem: !Sub arn:${AWS::Partition}:states:::dynamodb:updateItem
+        TABLE_NAME_TRAMAS: !Ref DBTramas
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DBTramas
+        - CloudWatchLogsFullAccess
  ###############      
  ## LOGS      ##
  ###############  
