@@ -173,18 +173,20 @@ func ValorMinimo(valor string, valorMinimo string, campo string) (bool, error) {
 }
 
 type Event struct {
-	Registro   int        `json:"registro"`
-	Atributo   string     `json:"atributo"`
-	Funcion    []string   `json:"funcion"`
-	Valor      string     `json:"valor"`
-	Argumentos [][]string `json:"argumentos"`
+	Transaccion string     `json:"transaccion"`
+	Registro    int        `json:"registro"`
+	Atributo    string     `json:"atributo"`
+	Funcion     []string   `json:"funcion"`
+	Valor       string     `json:"valor"`
+	Argumentos  [][]string `json:"argumentos"`
 }
 
 type FuncError struct {
-	Registro int    `json:"registro"`
-	Atributo string `json:"atributo"`
-	Funcion  string
-	Error    string
+	Transaccion string
+	Registro    int    `json:"registro"`
+	Atributo    string `json:"atributo"`
+	Funcion     string
+	Error       string
 }
 
 type FuncValidation struct {
@@ -244,7 +246,7 @@ func handler(eventArray []Event) (Response, error) {
 			}
 
 			if err != nil {
-				errores = append(errores, FuncError{Registro: e.Registro, Atributo: e.Atributo, Funcion: e.Funcion[i], Error: err.Error()})
+				errores = append(errores, FuncError{Transaccion: e.Transaccion, Registro: e.Registro, Atributo: e.Atributo, Funcion: e.Funcion[i], Error: err.Error()})
 			}
 			validaciones = append(validaciones, FuncValidation{Registro: e.Registro, Atributo: e.Atributo, Funcion: e.Funcion[i], Valid: validation})
 		}

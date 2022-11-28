@@ -1,0 +1,28 @@
+{
+  "Comment": "ValidationFirst Registry",
+  "StartAt": "First Registry",
+  "States": {
+    "First Registry":{
+      "Type": "Task",
+      "Resource": "${ValidationFirstRegistryFunctionArn}",
+      "OutputPath": "$",
+      "Next": "MapState"
+    },
+    "MapState":{
+      "Type": "Map",
+      "ItemsPath": "$.Array",
+      "MaxConcurrency": 40,
+      "Iterator": {
+          "StartAt": "Validate",
+          "States": {
+              "Validate": {
+                  "Type": "Task",
+                  "Resource": "${ValidationFunctionArn}",
+                  "End": true
+              }
+          }
+      },
+      "End": true
+    }
+  }
+}

@@ -243,6 +243,42 @@ Resources:
  ###################      
  ## STATEMACHINES ##
  ###################
+  ValidationFirstRegistryStateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      DefinitionUri: statemachines/validation_first_registry.asl.json
+      Type: EXPRESS
+      Name: validation_first_registry
+      DefinitionSubstitutions:
+        ValidationFunctionArn: !GetAtt ValidationFunction.Arn
+        ValidationFirstRegistryFunctionArn: !GetAtt ValidationFirstRegistryFunction.Arn
+      Logging:
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt ValidationFirstRegistryLogs.Arn
+        IncludeExecutionData: true
+        Level: ALL  
+      Policies: 
+        - LambdaInvokePolicy:
+            FunctionName: !Ref ValidationFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref ValidationFirstRegistryFunction
+        - CloudWatchLogsFullAccess
+      Events:
+        EBRule:
+          Type: EventBridgeRule
+          Properties:
+            InputPath: "$.detail"
+            Pattern:
+              detail:
+                bucket:
+                  name:
+                    - !Ref DataBucket                
+              detail-type:
+                - "Object Created"
+              source:
+                - aws.s3 
+
   UploadFileStateMachine:
     Type: AWS::Serverless::StateMachine
     Properties:
@@ -342,6 +378,20 @@ Resources:
                 - "Object Created"
               source:
                 - aws.s3 
+
+  FirstServStateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      DefinitionUri: statemachines/first_serv_carga.asl.json
+      Type: EXPRESS
+      Name: firstServStateMachine
+      DefinitionSubstitutions:
+        DDBUpdateItem: !Sub arn:${AWS::Partition}:states:::dynamodb:updateItem
+        TABLE_NAME_TRAMAS: !Ref DBTramas
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DBTramas
+        - CloudWatchLogsFullAccess
 
  ###############      
  ## LOGS      ##
