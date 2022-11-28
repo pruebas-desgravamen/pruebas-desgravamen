@@ -29,6 +29,7 @@ Resources:
                   # - !Ref ValidateCellStateMachine
                   - !Ref ValidationsStateMachine
                   - !Ref FirstServStateMachine
+                  - !Ref ValidationFirstRegistryStateMachine
               - Effect: Allow
                 Action:
                   - dynamodb:GetItem
@@ -306,22 +307,51 @@ Resources:
               source:
                 - aws.s3 
 
-  FirstServStateMachine:
+  ValidationFirstRegistryStateMachine:
     Type: AWS::Serverless::StateMachine
     Properties:
-      DefinitionUri: statemachines/first_serv_carga.asl.json
+      DefinitionUri: statemachines/validation_first_registry.asl.json
       Type: EXPRESS
-      Name: firstServStateMachine
+      Name: validation_first_registry
       DefinitionSubstitutions:
-        DDBUpdateItem: !Sub arn:${AWS::Partition}:states:::dynamodb:updateItem
-        TABLE_NAME_TRAMAS: !Ref DBTramas
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref DBTramas
+        ValidationFunctionArn: !GetAtt ValidationFunction.Arn
+        ValidationFirstRegistryFunctionArn: !GetAtt ValidationFirstRegistryFunction.Arn
+      Logging:
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt ValidationFirstRegistryLogs.Arn
+        IncludeExecutionData: true
+        Level: ALL  
+      Policies: 
+        - LambdaInvokePolicy:
+            FunctionName: !Ref ValidationFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref ValidationFirstRegistryFunction
         - CloudWatchLogsFullAccess
+      Events:
+        EBRule:
+          Type: EventBridgeRule
+          Properties:
+            InputPath: "$.detail"
+            Pattern:
+              detail:
+                bucket:
+                  name:
+                    - !Ref DataBucket                
+              detail-type:
+                - "Object Created"
+              source:
+                - aws.s3 
+
  ###############      
  ## LOGS      ##
  ###############  
+
+  ValidationFirstRegistryLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/vendedlogs/states/${AWS::StackName}/validation-first-registry
+      RetentionInDays: 3
 
   ValidationsLogs:
     Type: AWS::Logs::LogGroup
@@ -579,6 +609,29 @@ Resources:
                 - "Object Created"
               source:
                 - aws.s3 
+
+  ValidationFirstRegistryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/validation-first-registry
+      Handler: validation-first-registry
+      Runtime: go1.x
+      MemorySize: 2048 
+      Timeout: 300
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref DataBucket
+          TABLA_NAME_TRAMAS: !Ref DBTramas
+          TABLA_NAME_CONFIGURADOR: !Ref DBConfigurador
+          REGION: !Sub ${AWS::Region}
+      Policies: 
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DBTramas
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DBConfigurador
+        - AWSLambdaBasicExecutionRole
+        - S3ReadPolicy:
+            BucketName: !Ref DataBucket
 
   GagaFunction:         
     Type: AWS::Serverless::Function
