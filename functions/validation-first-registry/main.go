@@ -50,7 +50,7 @@ type QueryConfiguradorResponse struct {
 }
 
 type IdConfiguradorNPoliza struct {
-	IdConfigurador int
+	Sk string `json:"sk"`
 }
 
 type Cliente struct {
@@ -140,26 +140,26 @@ func handler(ctx context.Context, ev Evento) (Output, error) {
 		TableName:              aws.String(TABLE_NAME_CONFIGURADOR),
 		IndexName:              aws.String("pk-nPoliza"),
 		KeyConditionExpression: aws.String("pk= :pk and nPoliza= :nPoliza"),
-		ExpressionAttributeNames: map[string]*string{
-			"#producto": aws.String("producto"),
-		},
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":pk":      {S: aws.String("POLIZA")},
 			":nPoliza": {S: aws.String(nPolicy)},
 		},
-		ProjectionExpression: aws.String(" #producto"),
+		ProjectionExpression: aws.String("sk"),
 	}
 	queryIdConfigurador, _ := svcDynamo.Query(&queryInput)
 
 	idConfiguradorNPoliza := []IdConfiguradorNPoliza{}
 	err = dynamodbattribute.UnmarshalListOfMaps(queryIdConfigurador.Items, &idConfiguradorNPoliza)
+
+	structureId := strings.Split(idConfiguradorNPoliza[0].Sk, "#")[0]
+
 	if err != nil {
 		fmt.Println("Unmarshall Error")
 		// return "error on unmarshall", err
 		return Output{}, err
 	}
 
-	fmt.Println(idConfiguradorNPoliza)
+	fmt.Println(structureId)
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Query to know the functions that will be applied to their respective columns (ATRIBUTO - FUNCION)
