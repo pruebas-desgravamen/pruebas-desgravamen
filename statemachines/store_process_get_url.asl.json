@@ -1,0 +1,91 @@
+{
+  "Comment": "Store Process & Get URL",
+  "StartAt": "Get NUMERATOR",
+  "States": {
+    "Get NUMERATOR":{
+        "Type": "Task",
+        "Resource": "${DDBUpdateItem}",
+        "Parameters": {
+            "TableName": "${TABLE_NAME_TRAMAS}",
+            "Key": {
+                "pk": {
+                    "S": "NUMERATOR"
+                },
+                "sk": {
+                    "S": "NUMERATOR"
+                }
+            },
+            "ExpressionAttributeValues": {
+                ":idProcess": {
+                    "N": "1"
+                }
+            },
+            "UpdateExpression": "ADD idProcess :idProcess",
+            "ReturnValues": "ALL_NEW"
+        },
+        "OutputPath": "$.Attributes",
+        "Next": "Save Process"
+    },
+    "Save Process": {
+        "Type": "Task",
+        "Resource": "${DDBUpdateItem}",
+        "Parameters": {
+            "TableName": "${TABLE_NAME_TRAMAS}",
+            "Key": {
+                "pk":{
+                    "S.$":"$.idProcess.N"
+                },
+                "sk":{
+                    "S":"PROCESO"
+                }
+            },
+            "ExpressionAttributeValues": {
+                ":policy":{
+                    "S.$":"$$.Execution.Input.input.policy"
+                },
+                ":contractor":{
+                    "S.$":"$$.Execution.Input.input.contractor"
+                },
+                ":product":{
+                    "S.$":"$$.Execution.Input.input.product"
+                },
+                ":salesChannel":{
+                    "S.$":"$$.Execution.Input.input.salesChannel"
+                },
+                ":Ttransaction":{
+                    "S.$":"$$.Execution.Input.input.Ttransaction"
+                },
+                ":declarationPeriod":{
+                    "S.$":"$$.Execution.Input.input.declarationPeriod"
+                },
+                ":ruc":{
+                    "S.$":"$$.Execution.Input.input.ruc"
+                },
+                ":structure":{
+                    "S.$":"$$.Execution.Input.input.structure"
+                }
+            },
+            "UpdateExpression": "SET  policy = :policy, contractor = :contractor, product = :product, salesChannel = :salesChannel, Ttransaction = :Ttransaction, declarationPeriod = :declarationPeriod, ruc = :ruc, structure = :structure"
+        },
+        "Next": "Generate URL"
+    },
+
+    "Generate URL":{
+        "Type": "Task",
+        "Parameters": {
+            "filename.$" : "$$.Execution.Input.filename"
+        },
+        "Resource": "${InFunctionArn}",
+        "OutputPath": "$",
+        "Next": "Send URL"
+      },
+
+    "Send URL":{
+        "Type": "Pass",
+        "Parameters":{
+            "url.$": "$"
+        },
+        "End": true
+    }
+  }
+}
