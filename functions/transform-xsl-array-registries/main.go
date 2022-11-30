@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/360EntSecGroup-Skylar/excelize"
@@ -72,13 +73,16 @@ type Iobject struct {
 	Sequencer string `json:"sequencer"`
 }
 
+type IdConfiguradorNPoliza struct {
+	Sk string `json:"sk"`
+}
+
 type Evento struct {
 	Object Iobject `json:"object"`
 }
 
 func handler(ctx context.Context, ev Evento) ([][]RegistroAtributoValorFuncionArgumento, error) {
 
-	// var TABLE_NAME = os.Getenv("TABLA_NAME")
 	var BUCKET_NAME = os.Getenv("BUCKET_NAME")
 	var OBJECT_NAME = ev.Object.Key
 	var TABLE_NAME_CONFIGURADOR = os.Getenv("TABLA_NAME_CONFIGURADOR")
@@ -109,6 +113,44 @@ func handler(ctx context.Context, ev Evento) ([][]RegistroAtributoValorFuncionAr
 	// Open XSLX file
 	result, _ := OpenFile(*file)
 
+	// Get data from File Name
+	transaccion := OBJECT_NAME[0:2]
+	fmt.Println(transaccion)
+	if transaccion == "VE" {
+		transaccion = "VENTA"
+	}
+
+	nPolicy := OBJECT_NAME[2:17]
+	nPolicyInt, _ := strconv.Atoi(nPolicy)
+	nPolicy = strconv.Itoa(nPolicyInt)
+	fmt.Println(nPolicy)
+	// Query to know id estructura
+
+	queryInput := dynamodb.QueryInput{
+		TableName:              aws.String(TABLE_NAME_CONFIGURADOR),
+		IndexName:              aws.String("pk-nPoliza"),
+		KeyConditionExpression: aws.String("pk= :pk and nPoliza= :nPoliza"),
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":pk":      {S: aws.String("POLIZA")},
+			":nPoliza": {S: aws.String(nPolicy)},
+		},
+		ProjectionExpression: aws.String("sk"),
+	}
+	queryIdConfigurador, _ := svcDynamo.Query(&queryInput)
+
+	idConfiguradorNPoliza := []IdConfiguradorNPoliza{}
+	_ = dynamodbattribute.UnmarshalListOfMaps(queryIdConfigurador.Items, &idConfiguradorNPoliza)
+
+	structureId := strings.Split(idConfiguradorNPoliza[0].Sk, "#")[0]
+
+	// if err != nil {
+	// 	fmt.Println("Unmarshall Error")
+	// 	// return "error on unmarshall", err
+	// 	return Output{}, err
+	// }
+
+	fmt.Println(structureId)
+
 	// Save the name of the columns
 	columnas := result.GetRows("Sheet1")[0]
 
@@ -129,7 +171,7 @@ func handler(ctx context.Context, ev Evento) ([][]RegistroAtributoValorFuncionAr
 			"#argumento": aws.String("argumento"),
 		},
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":pk": {S: aws.String("1")},
+			":pk": {S: aws.String(structureId)},
 		},
 		ProjectionExpression: aws.String("#funcion, #atributo, #argumento"),
 	}
