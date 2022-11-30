@@ -25,7 +25,7 @@ Resources:
                 Action:
                   - states:StartSyncExecution #Type: Express
                 Resource:
-                  - !Ref UploadFileStateMachine
+                  - !Ref StoreProcessGetURLStateMachine
                   # - !Ref ValidateCellStateMachine
                   - !Ref ValidationsStateMachine
                   - !Ref FirstServStateMachine
@@ -39,10 +39,10 @@ Resources:
                   - dynamodb:Query
                   - dynamodb:Scan
                 Resource: 
-                  - !GetAtt DBTramas.Arn
+                  - !GetAtt DBProcesses.Arn
                   - !Sub 
                     - "${Table}/index/*"
-                    - { Table: !GetAtt DBTramas.Arn }
+                    - { Table: !GetAtt DBProcesses.Arn }
               - Effect: Allow
                 Action:
                 - lambda:invokeFunction
@@ -71,17 +71,17 @@ Resources:
       ApiId: !GetAtt AppSyncApi.ApiId
       DefinitionS3Location: "./schema.graphql"
 
-  # AppSync Data Source for DynamoDB
-  AppSyncTableDataSource:
+  # AppSync Data Source for DynamoDB - DBProcesses
+  DBProcessesDataSource:
     Type: AWS::AppSync::DataSource
     Properties:
-      Name: Tramas
+      Name: DBProcesses
       ApiId: !GetAtt AppSyncApi.ApiId
       Description: "The Single Table AppSync Data Source"
       Type: AMAZON_DYNAMODB
       ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
       DynamoDBConfig:
-        TableName: !Ref DBTramas
+        TableName: !Ref DBProcesses
         AwsRegion: !Sub ${AWS::Region}
 
    # AppSync Data Source for StepFunction
@@ -157,38 +157,44 @@ Resources:
   #       }
   #     ResponseMappingTemplate: $util.toJson($context.result)
 
-  ShowDashboardResolver:
+  ListProcessesResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: AppSyncSchema
     Properties:
       ApiId: !GetAtt AppSyncApi.ApiId
       TypeName: Query
-      FieldName: showDashboard
-      DataSourceName: !GetAtt AppSyncTableDataSource.Name
+      FieldName: listProcesses
+      DataSourceName: !GetAtt DBProcessesDataSource.Name
       RequestMappingTemplate: >
         {
           "version": "2017-02-28",
           "operation": "Query",
+          "index": "list-processes",
           "query": {
-            "expression": "pk = :pk",
+            "expression": "sk = :sk",
             "expressionValues":	{              
-        	    ":pk" : $util.dynamodb.toDynamoDBJson("TRAMA")
+        	    ":sk" : $util.dynamodb.toDynamoDBJson("PROCESO")
             }
-          }
+          },
+          #if( $context.args.nextToken ) "nextToken": "$context.args.nextToken", #end
+          #if( $context.args.limit ) "limit" : $context.args.limit #else "limit": 10  #end
         }
-      ResponseMappingTemplate: >
+      ResponseMappingTemplate: > # falta llenar con la lectura ()
         {
-          "cargas": [
+          "processes": [
             #foreach($item in $ctx.result.items) {
-              "tipo": $util.toJson($item['tipo']),
-              "poliza": $util.toJson($item['poliza']),                           
-              "contratante": $util.toJson($item['contratante']),      
-              "producto": $util.toJson($item['producto']),         
-              "canalDeVenta": $util.toJson($item['canalDeVenta']),                           
-              "transaccion": $util.toJson($item['transaccion']),                           
-              "periodoDeclaracion": $util.toJson($item['periodoDeclaracion']),                           
-              "ruc": $util.toJson($item['ruc']),                           
-              "userCode": $util.toJson($item['userCode'])
+              "idProcess": $util.toJson($item['idProcess']),
+              "Ttransaction": $util.toJson($item['Ttransaction']),
+              "contractor": $util.toJson($item['contractor']),
+              "policy": $util.toJson($item['policy']),
+              "product": $util.toJson($item['product']),
+              "salesChannel": $util.toJson($item['salesChannel']),
+              "currency": $util.toJson($item['currency']),
+              "premium": $util.toJson($item['premium']),
+              "asegurados": $util.toJson($item['asegurados']),
+              "declarationPeriod": $util.toJson($item['declarationPeriod']),
+              "creationDate": $util.toJson($item['creationDate']),
+              "faseActual": $util.toJson($item['faseActual'])
             }
             #if($foreach.hasNext),#end
             #end
@@ -197,13 +203,13 @@ Resources:
         }
 
 
-  UploadFileResolver:
+  StoreProcessGetURLResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: AppSyncSchema
     Properties:
       ApiId: !GetAtt AppSyncApi.ApiId
       TypeName: Mutation
-      FieldName: uploadFile
+      FieldName: storeProcessGetURL
       DataSourceName: !GetAtt StepFunctionsHttpDataSource.Name
       RequestMappingTemplate: !Sub >
         {
@@ -216,7 +222,7 @@ Resources:
               "x-amz-target":"AWSStepFunctions.StartSyncExecution"
             },
             "body": {
-              "stateMachineArn": "${UploadFileStateMachine}",
+              "stateMachineArn": "${StoreProcessGetURLStateMachine}",
               "input": "{ \"input\": $util.escapeJavaScript($util.toJson($ctx.args.input)), \"filename\": $util.escapeJavaScript($util.toJson($ctx.args.filename))}"
             }
           }
@@ -279,20 +285,21 @@ Resources:
               source:
                 - aws.s3 
 
-  UploadFileStateMachine:
+  StoreProcessGetURLStateMachine:
     Type: AWS::Serverless::StateMachine
     Properties:
-      DefinitionUri: statemachines/upload_file.asl.json
+      DefinitionUri: statemachines/store_process_get_url.asl.json
       Type: EXPRESS
-      Name: upload-file
-      DefinitionSubstitutions:  
-        TableName: !Ref DBTramas
+      Name: store_process_get_url
+      DefinitionSubstitutions: 
+        DDBUpdateItem: !Sub arn:${AWS::Partition}:states:::dynamodb:updateItem
+        TABLE_NAME_TRAMAS: !Ref DBProcesses
         FirstServCargaFunctionArn: !GetAtt FirstServCargaFunction.Arn
         InFunctionArn: !GetAtt InFunction.Arn
       Logging:
         Destinations:
           - CloudWatchLogsLogGroup:
-              LogGroupArn: !GetAtt UploadFileLogs.Arn
+              LogGroupArn: !GetAtt StoreProcessGetURLLogs.Arn
         IncludeExecutionData: true
         Level: ALL  
       Policies:
@@ -301,7 +308,7 @@ Resources:
         - LambdaInvokePolicy:
             FunctionName: !Ref InFunction
         - DynamoDBCrudPolicy:
-            TableName: !Ref DBTramas
+            TableName: !Ref DBProcesses
         - CloudWatchLogsFullAccess
 
   ValidationsStateMachine:
@@ -387,10 +394,10 @@ Resources:
       Name: firstServStateMachine
       DefinitionSubstitutions:
         DDBUpdateItem: !Sub arn:${AWS::Partition}:states:::dynamodb:updateItem
-        TABLE_NAME_TRAMAS: !Ref DBTramas
+        TABLE_NAME_TRAMAS: !Ref DBProcesses
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Ref DBTramas
+            TableName: !Ref DBProcesses
         - CloudWatchLogsFullAccess
 
  ###############      
@@ -421,10 +428,10 @@ Resources:
       LogGroupName: !Sub /aws/vendedlogs/states/${AWS::StackName}/transform-xsl
       RetentionInDays: 3
   
-  UploadFileLogs:
+  StoreProcessGetURLLogs:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /aws/vendedlogs/states/${AWS::StackName}/upload-file
+      LogGroupName: !Sub /aws/vendedlogs/states/${AWS::StackName}/store-process-get-url
       RetentionInDays: 3
 
 
@@ -432,10 +439,10 @@ Resources:
  ## DynamoDB  ##
  ############### 
 
-  DBTramas:
+  DBProcesses:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: DBTramas
+      TableName: DBProcesses
       AttributeDefinitions:
         - AttributeName: pk
           AttributeType: S
@@ -447,6 +454,15 @@ Resources:
         - AttributeName: sk
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+      - IndexName: list-processes
+        KeySchema:
+          - AttributeName: sk
+            KeyType: HASH
+          - AttributeName: pk
+            KeyType: RANGE
+        Projection:
+          ProjectionType: ALL ##CAMBIARRR
 
   DBConfigurador:
     Type: AWS::DynamoDB::Table
@@ -492,12 +508,12 @@ Resources:
       Environment:
         Variables:
           BUCKET_NAME: !Ref DataBucket
-          TABLA_NAME_TRAMAS: !Ref DBTramas
+          TABLA_NAME_TRAMAS: !Ref DBProcesses
           TABLA_NAME_CONFIGURADOR: !Ref DBConfigurador
           REGION: !Sub ${AWS::Region}
       Policies: 
         - DynamoDBCrudPolicy:
-            TableName: !Ref DBTramas
+            TableName: !Ref DBProcesses
         - DynamoDBCrudPolicy:
             TableName: !Ref DBConfigurador
         - AWSLambdaBasicExecutionRole
@@ -560,12 +576,12 @@ Resources:
       Environment:
         Variables:
           BUCKET_NAME: !Ref DataBucket
-          TABLA_NAME_TRAMAS: !Ref DBTramas
+          TABLA_NAME_TRAMAS: !Ref DBProcesses
           TABLA_NAME_CONFIGURADOR: !Ref DBConfigurador
           REGION: !Sub ${AWS::Region}
       Policies: 
         - DynamoDBCrudPolicy:
-            TableName: !Ref DBTramas
+            TableName: !Ref DBProcesses
         - DynamoDBCrudPolicy:
             TableName: !Ref DBConfigurador
         - AWSLambdaBasicExecutionRole
@@ -597,12 +613,12 @@ Resources:
       Environment:
         Variables:
           BUCKET_NAME: !Ref DataBucket
-          TABLA_NAME_TRAMAS: !Ref DBTramas
+          TABLA_NAME_TRAMAS: !Ref DBProcesses
           TABLA_NAME_CONFIGURADOR: !Ref DBConfigurador
           REGION: !Sub ${AWS::Region}
       Policies: 
         - DynamoDBCrudPolicy:
-            TableName: !Ref DBTramas
+            TableName: !Ref DBProcesses
         - DynamoDBCrudPolicy:
             TableName: !Ref DBConfigurador
         - AWSLambdaBasicExecutionRole
@@ -634,12 +650,12 @@ Resources:
       Environment:
         Variables:
           BUCKET_NAME: !Ref DataBucket
-          TABLA_NAME_TRAMAS: !Ref DBTramas
+          TABLA_NAME_TRAMAS: !Ref DBProcesses
           TABLA_NAME_CONFIGURADOR: !Ref DBConfigurador
           REGION: !Sub ${AWS::Region}
       Policies: 
         - DynamoDBCrudPolicy:
-            TableName: !Ref DBTramas
+            TableName: !Ref DBProcesses
         - DynamoDBCrudPolicy:
             TableName: !Ref DBConfigurador
         - AWSLambdaBasicExecutionRole
@@ -671,12 +687,12 @@ Resources:
       Environment:
         Variables:
           BUCKET_NAME: !Ref DataBucket
-          TABLA_NAME_TRAMAS: !Ref DBTramas
+          TABLA_NAME_TRAMAS: !Ref DBProcesses
           TABLA_NAME_CONFIGURADOR: !Ref DBConfigurador
           REGION: !Sub ${AWS::Region}
       Policies: 
         - DynamoDBCrudPolicy:
-            TableName: !Ref DBTramas
+            TableName: !Ref DBProcesses
         - DynamoDBCrudPolicy:
             TableName: !Ref DBConfigurador
         - AWSLambdaBasicExecutionRole
@@ -742,10 +758,10 @@ Resources:
       Timeout: 5
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Ref DBTramas
+            TableName: !Ref DBProcesses
       Environment:
         Variables:
-          DBTramas: !Ref DBTramas
+          DBProcesses: !Ref DBProcesses
 
 
  #############################

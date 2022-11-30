@@ -1,157 +1,210 @@
-enum Tipo {
-  POLIZA
-  RUC
-  CONTRATANTE
-}
+#-------------- CARGA MASIVA ----------------
 
-enum Transaccion {
+enum Transaction {
   VENTA
   AFILIACIONES
   PAGOS
 }
 
-# input Date{
-#   month: String
-#   year: String
-# }
-
-# input
-
-# input InputValidations{
-#   datosGenerales: 
-# }
-
-input InputCargaDashboard {
-  tipo: Tipo
+# save process
+input InputCargaDashboard { #cambiar nombre
   # numero de poliza
-  poliza: String
+  policy: String!
   # contratante
-  contratante: String
-  # producto: esta bloqueado 
-  producto: String
-  # canalDeVenta esta bloqueado
-  canalDeVenta: String
+  contractor: String!
+  # producto
+  product: String!
+  # canal de venta
+  salesChannel: String!
   # transaccion
-  transaccion: Transaccion
+  Ttransaction: Transaction!
   # periodo de declaracion
-  #periodoDeclaracion: Date
-  # periodo de declaracion
-  periodoDeclaracion: String
+  declarationPeriod: String!
   # RUC
   ruc: String
-  # codigo del usuario que hace el registro
-  userCode: String
+  # id estructura
+  structure: String!
 }
 
-type CargaDashboard {
-  tipo: Tipo
-  # numero de poliza
-  poliza: String
-  # contratante
-  contratante: String
-  # producto: esta bloqueado 
-  producto: String
-  # canalDeVenta esta bloqueado
-  canalDeVenta: String
+# # query processes
+type AllProcesses {  #Cambiar nombre    DYNAMO: RUC, FECHA DE FINALIZACION E INICIO DE PROCESO PARA CADA ESTADO, cantidad de registros
+  idProcess: String! #id del proceso
   # transaccion
-  transaccion: Transaccion
+  Ttransaction: Transaction!
+  # contratante
+  contractor: String!
+  # numero de poliza
+  policy: String!
+  # producto   
+  product: String! 
+  # canalDeVenta
+  salesChannel: String!
+  # tipo de moneda (1 para soles, 2 para dolares)
+  currency: Int!
+  # monto de prima
+  premium: Float!
+  # Cantidad de asegurados
+  asegurados: Int!
   # periodo de declaracion
-  # periodoDeclaracion: Date
-  # periodo de declaracion
-  periodoDeclaracion: String
-  # RUC
-  ruc: String
-  # codigo del usuario que hace el registro
-  userCode: String
+  declarationPeriod: String!
+  # fecha y hora de creacion
+  creationDate: String!
+  # fase actual
+  faseActual: String! # fase o estado (trabajar con numeros)
+  # objeto fase
+  # fase: [Objeto Fase] # objeto fase: numero de fase, cantidad errores, cantidad analizada o exitosa, tiempo (preguntar Gustavox|) 
 }
 
 
-type ShowDashboardOutput{
-  cargas:  [CargaDashboard]
+type AllProcessesOutput{
+  processes:  [AllProcesses]
   nextToken: String
 }
 
 
-
 #-------------- CONFIGURACION ----------------
-input DatosGeneralesInput{
+# input DatosGeneralesInput{
 
-  nombreEstructura: String!
-  transaccion: String!
-  ramo: String!
-  datosCabecera: String!
-  certificadoPorRol: String!
-  filasOrdenadasPorRol: String!
-  formatoArchivo: String!
-}
+#   nombreEstructura: String!
+#   transaccion: String!
+#   ramo: String!
+#   datosCabecera: String!
+#   certificadoPorRol: Boolean!
+#   filasOrdenadasPorRol: Boolean!
+#   formatoArchivo: String!
+#   dateFormat: String!
+# }
+
+# input Poliza{
+#   idStructure: String!
+#   nombreStructure: String!
+#   producto: String!
+#   nPoliza: String!
+#   contratante: String!
+#   canalVenta: String!
+#   vigencia: String!
+#   moneda: String!
+#   reglas: [Int]!
+# }
 
 
-input PolizaInput{
+# input PolizaInput{
 
-  producto: String!
-  nPoliza: String!
-  contratante: String!
-  canalVenta: String!
-  vigencia: String!
-  moneda: String!
-  reglas: [Int]!
-}
+#   producto: String!
+#   nPoliza: String!
+#   contratante: String!
+#   canalVenta: String!
+#   vigencia: String!
+#   moneda: String!
+#   reglas: [Int]!
+# }
 
-input AtributosInput{
+# input AtributosInput{
 
-  id: String!
-  atributo: String!
-  tipoDato: String!
-  obligatorio: String!
-  valorUnico: String!
-  funcion: [String]!
-  origen: [String]!
-  argumento: [String]!
-  dominio: [String]!
-}
+#   id: String!
+#   atributo: String!
+#   tipoDato: String!
+#   obligatorio: String!
+#   valorUnico: String!
+#   funcion: [String]!
+#   origen: [String]!
+#   argumento: [String]!
+#   dominio: [String]!
+# }
 
-input NotificacionesInput{
+# input NotificacionesInput{
 
-  id: String!
-  evento: String!
-  aplicacion: String!
-  asunto: String!
-  plantilla: String!
-  fase: String!
-}
+#   id: String!
+#   evento: String!
+#   aplicacion: String!
+#   asunto: String!
+#   plantilla: String!
+#   fase: String!
+# }
 
-input EntidadInput{
+# input EntidadInput{
 
-  atributo: String!
-  origen: String!
-  valor: String!
-}
+#   atributo: String!
+#   origen: String!
+#   valor: String!
+# }
 
-input RegistrarInput{
-  cliente: [EntidadInput]!
-  certificado: [EntidadInput]!
-  rol: [EntidadInput]!
-  poliza: [EntidadInput]!
-  credito: [EntidadInput]!
-}
+# input RegistrarInput{
+#   cliente: [EntidadInput]!
+#   certificado: [EntidadInput]!
+#   rol: [EntidadInput]!
+#   poliza: [EntidadInput]!
+#   credito: [EntidadInput]!
+# }
 
-input EventInput {
-  datosGenerales: DatosGeneralesInput
-  coleccionPolizas: [PolizaInput]
-  lectura: [AtributosInput]
-  registrar: RegistrarInput
-  notificaciones: [NotificacionesInput]
-}
+# type Structure {
+#   datosGenerales: DatosGenerales!  # cambiar
+#   coleccionPolizas: [Poliza]! # Falta crear type
+#   lectura: [Atributos]!  # Falta crear type
+#   registrar: Registrar!  # Falta crear type
+#   notificaciones: [Notificaciones]!  # Falta crear type
+#   structureId: String!
+# }
+
+# type DatosGenerales {
+#   nombreEstructura: String!
+#   transaccion: String!
+#   ramo: String!
+#   datosCabecera: String!
+#   certificadoPorRol: String!
+#   filasOrdenadasPorRol: String!
+#   formatoArchivo: String!
+#   creationDate: String
+#   changeDate: String
+#   state: Boolean!
+# }
+
+# input StructureInput {
+#   datosGenerales: DatosGeneralesInput!
+#   coleccionPolizas: [PolizaInput]!
+#   lectura: [AtributosInput]!
+#   registrar: RegistrarInput!
+#   notificaciones: [NotificacionesInput]!
+#   structureId: String #id para hacer un update a una estructura
+# }
 
 type Mutation {
-  uploadFile(input: InputCargaDashboard, filename: String): String
-  firstServCarga(input: InputCargaDashboard): String
-  saveStructure(event: EventInput): String
-  # validations(validations: InputValidations ): String
+
+  #####################################################
+  ####################ESTRUCTURAS######################
+  #####################################################
+  
+  # storeStructure(event: StructureInput!): Boolean #store
+  # # validations(validations: InputValidations ): String
+  # deleteStructure(structureId:String!):Boolean # falta eliminar una estructura
+  # activeStructure(status:Boolean):Boolean # falta activar o desactivar una estructura
+  # # cloneStructure(???): Boolean # falta clonar una estructura
+  # updateStructure(event: StructureInput!): Boolean #borrar y crear?
+
+  #####################################################
+  ###################CARGA MASIVA######################
+  #####################################################
+  
+  # DONE
+  storeProcessGetURL(input: InputCargaDashboard, filename: String): String   #Devuelve URL
+
+  
 }
 
 type Query{
-  showDashboard: ShowDashboardOutput
+
+  #####################################################
+  ####################ESTRUCTURAS######################
+  #####################################################
+  # getStructure(structureId:String!):Structure  # falta obtener una estructura
+  # getAllStructures: [Structure]    # listar estructuras posiblemente?
+
+  #####################################################
+  ###################CARGA MASIVA######################
+  #####################################################
+  # getStructureCarga(xRuc:String, xPoliza: String, xContratante: String): Poliza    # falta crear, hablar con gustavo para ver tema de lectura de datos para creacion de tramas
+  listProcesses(limit: Int, nextToken: String): AllProcessesOutput
+  # getErrores(idProcess: String!): Errores # reporte de errores en el detalle de la estructura
 }
 
 schema {
