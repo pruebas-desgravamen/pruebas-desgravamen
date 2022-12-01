@@ -17,7 +17,7 @@ input InputCargaDashboard { #cambiar nombre
   # canal de venta
   salesChannel: String!
   # transaccion
-  Ttransaction: Transaction!
+  transaction: Transaction!
   # periodo de declaracion
   declarationPeriod: String!
   # RUC
@@ -30,7 +30,7 @@ input InputCargaDashboard { #cambiar nombre
 type AllProcesses {  #Cambiar nombre    DYNAMO: RUC, FECHA DE FINALIZACION E INICIO DE PROCESO PARA CADA ESTADO, cantidad de registros
   idProcess: String! #id del proceso
   # transaccion
-  Ttransaction: Transaction!
+  transaction: Transaction!
   # contratante
   contractor: String!
   # numero de poliza

@@ -28,7 +28,6 @@ Resources:
                   - !Ref StoreProcessGetURLStateMachine
                   # - !Ref ValidateCellStateMachine
                   - !Ref ValidationsStateMachine
-                  - !Ref FirstServStateMachine
                   - !Ref ValidationFirstRegistryStateMachine
               - Effect: Allow
                 Action:
@@ -43,12 +42,16 @@ Resources:
                   - !Sub 
                     - "${Table}/index/*"
                     - { Table: !GetAtt DBProcesses.Arn }
+                  - !GetAtt DBConfigurador.Arn
+                  - !Sub 
+                    - "${Table}/index/*"
+                    - { Table: !GetAtt DBConfigurador.Arn }
               - Effect: Allow
                 Action:
                 - lambda:invokeFunction
                 Resource: 
-                  - !GetAtt FirstServCargaFunction.Arn
                   - !GetAtt SaveStructureFunction.Arn
+                  - !GetAtt ReadFilenameFunction.Arn
 
   AppSyncApi:
     DependsOn: AppSyncServiceRole
@@ -258,7 +261,6 @@ Resources:
       DefinitionSubstitutions: 
         DDBUpdateItem: !Sub arn:${AWS::Partition}:states:::dynamodb:updateItem
         TABLE_NAME_TRAMAS: !Ref DBProcesses
-        FirstServCargaFunctionArn: !GetAtt FirstServCargaFunction.Arn
         GetURLFunctionArn: !GetAtt GetURLFunction.Arn
       Logging:
         Destinations:
@@ -267,8 +269,6 @@ Resources:
         IncludeExecutionData: true
         Level: ALL  
       Policies:
-        - LambdaInvokePolicy:
-            FunctionName: !Ref FirstServCargaFunction
         - LambdaInvokePolicy:
             FunctionName: !Ref GetURLFunction
         - DynamoDBCrudPolicy:
@@ -321,8 +321,13 @@ Resources:
       Type: EXPRESS
       Name: validation_first_registry
       DefinitionSubstitutions:
-        ValidationFunctionArn: !GetAtt ValidationFunction.Arn
+        GagaFunctionArn: !GetAtt GagaFunction.Arn
         ValidationFirstRegistryFunctionArn: !GetAtt ValidationFirstRegistryFunction.Arn
+        ReadFilenameFunctionArn: !GetAtt ReadFilenameFunction.Arn
+        DDBQuery: arn:aws:states:::aws-sdk:dynamodb:query
+        TABLE_NAME_CONFIGURADOR: !Ref DBConfigurador
+        TABLE_NAME_PROCESSES: !Ref DBProcesses
+
       Logging:
         Destinations:
           - CloudWatchLogsLogGroup:
@@ -330,10 +335,16 @@ Resources:
         IncludeExecutionData: true
         Level: ALL  
       Policies: 
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DBConfigurador
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DBProcesses
         - LambdaInvokePolicy:
-            FunctionName: !Ref ValidationFunction
+            FunctionName: !Ref GagaFunction
         - LambdaInvokePolicy:
             FunctionName: !Ref ValidationFirstRegistryFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref ReadFilenameFunction
         - CloudWatchLogsFullAccess
       Events:
         EBRule:
@@ -398,6 +409,8 @@ Resources:
           AttributeType: S
         - AttributeName: sk
           AttributeType: S
+        - AttributeName: policy
+          AttributeType: S
       KeySchema:
         - AttributeName: pk
           KeyType: HASH
@@ -410,6 +423,14 @@ Resources:
           - AttributeName: sk
             KeyType: HASH
           - AttributeName: pk
+            KeyType: RANGE
+        Projection:
+          ProjectionType: ALL ##CAMBIARRR
+      - IndexName: sk-policy
+        KeySchema:
+          - AttributeName: sk
+            KeyType: HASH
+          - AttributeName: policy
             KeyType: RANGE
         Projection:
           ProjectionType: ALL ##CAMBIARRR
@@ -680,6 +701,22 @@ Resources:
               source:
                 - aws.s3 
 
+  ReadFilenameFunction:         
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/read-filename
+      Handler: read-filename
+      Runtime: go1.x
+      MemorySize: 2048 
+      Timeout: 300
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref DataBucket
+          REGION: !Sub ${AWS::Region}
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - S3ReadPolicy:
+            BucketName: !Ref DataBucket
 
   GetURLFunction:         
     Type: AWS::Serverless::Function

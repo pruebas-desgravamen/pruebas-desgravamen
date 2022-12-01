@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/360EntSecGroup-Skylar/excelize"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -53,26 +54,6 @@ type IdConfiguradorNPoliza struct {
 	Sk string `json:"sk"`
 }
 
-type Cliente struct {
-	PK     string `json:"pk"`
-	Sk     string `json:"sk"`
-	TIdDoc string `json:"tIdDoc"`
-	NIdDoc string `json:"nIdDoc"`
-	Name   string `json:"name"`
-}
-
-type Credito struct {
-	PK       string `json:"pk"`
-	Sk       string `json:"sk"`
-	Currency string `json:"currency"`
-}
-
-type Certificado struct {
-	PK    string `json:"pk"`
-	Sk    string `json:"sk"`
-	Prime string `json:"Prime"`
-}
-
 type Iobject struct {
 	Key       string `json:"key"`
 	Etag      string `json:"etag"`
@@ -80,20 +61,27 @@ type Iobject struct {
 }
 
 type Evento struct {
-	Object Iobject `json:"object"`
+	Object    Iobject `json:"object"`
+	Structure string  `json:"structure"`
+	Filename  string  `json:"filename"`
+}
+
+type Registry struct {
+	Array [][]RegistroAtributoValorFuncionArgumento
 }
 
 type Output struct {
-	Errors []string
-	Array  [][]RegistroAtributoValorFuncionArgumento
+	Errors         []string
+	ErrorsDataType []FuncError
 }
 
 func handler(ctx context.Context, ev Evento) (Output, error) {
 
 	var BUCKET_NAME = os.Getenv("BUCKET_NAME")
-	var OBJECT_NAME = ev.Object.Key
+	var OBJECT_NAME = ev.Filename
 	var TABLE_NAME_CONFIGURADOR = os.Getenv("TABLA_NAME_CONFIGURADOR")
 	var output = Output{}
+	var registry = Registry{}
 
 	//Iniciar sesion en aws
 	sess, err := session.NewSession(&aws.Config{
@@ -129,38 +117,6 @@ func handler(ctx context.Context, ev Evento) (Output, error) {
 		transaccion = "VENTA"
 	}
 
-	nPolicy := OBJECT_NAME[2:17]
-	nPolicyInt, _ := strconv.Atoi(nPolicy)
-	nPolicy = strconv.Itoa(nPolicyInt)
-	fmt.Println(nPolicy)
-
-	// Query to know id estructura
-
-	queryInput := dynamodb.QueryInput{
-		TableName:              aws.String(TABLE_NAME_CONFIGURADOR),
-		IndexName:              aws.String("pk-nPoliza"),
-		KeyConditionExpression: aws.String("pk= :pk and nPoliza= :nPoliza"),
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":pk":      {S: aws.String("POLIZA")},
-			":nPoliza": {S: aws.String(nPolicy)},
-		},
-		ProjectionExpression: aws.String("sk"),
-	}
-	queryIdConfigurador, _ := svcDynamo.Query(&queryInput)
-
-	idConfiguradorNPoliza := []IdConfiguradorNPoliza{}
-	err = dynamodbattribute.UnmarshalListOfMaps(queryIdConfigurador.Items, &idConfiguradorNPoliza)
-
-	structureId := strings.Split(idConfiguradorNPoliza[0].Sk, "#")[0]
-
-	if err != nil {
-		fmt.Println("Unmarshall Error")
-		// return "error on unmarshall", err
-		return Output{}, err
-	}
-
-	fmt.Println(structureId)
-
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Query to know the functions that will be applied to their respective columns (ATRIBUTO - FUNCION)
 	inputQueryConfigurador := dynamodb.QueryInput{
@@ -172,7 +128,7 @@ func handler(ctx context.Context, ev Evento) (Output, error) {
 			"#argumento": aws.String("argumento"),
 		},
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":pk": {S: aws.String("1")},
+			":pk": {S: aws.String(ev.Structure)},
 		},
 		ProjectionExpression: aws.String("#funcion, #atributo, #argumento"),
 	}
@@ -211,15 +167,21 @@ func handler(ctx context.Context, ev Evento) (Output, error) {
 		output.Errors = append(output.Errors, "Error en la cantidad de columnas de la trama con la del configurador")
 		return output, nil
 	}
+	fmt.Println("first possible error")
+	fmt.Println(output)
 
 	for columnaContador := 0; columnaContador < len(queryResponse); columnaContador++ {
 		if columnas[columnaContador] == queryResponse[columnaContador].Atributo {
-			fmt.Println(columnas[columnaContador])
-			fmt.Println("okay: true")
 		} else {
-			output.Errors = append(output.Errors, columnas[columnaContador]+"no existe")
+			output.Errors = append(output.Errors, columnas[columnaContador]+" no existe")
 		}
 	}
+	if len(output.Errors) > 0 {
+		return output, nil
+	}
+
+	fmt.Println("second possible erro")
+	fmt.Println(output)
 
 	/////////////////////////////////////////////////////
 
@@ -303,15 +265,23 @@ func handler(ctx context.Context, ev Evento) (Output, error) {
 	fmt.Println(valorFuncionList)
 
 	for i := 0; i < len(valorFuncionList); i += len(columnas) {
-		output.Array = append(output.Array, valorFuncionList[i:i+len(columnas)])
+		registry.Array = append(registry.Array, valorFuncionList[i:i+len(columnas)])
 	}
 
 	fmt.Println("output")
 	fmt.Println(output)
 
+	validationErrors := Validations(registry.Array[0])
+
+	if len(validationErrors) > 0 {
+		fmt.Println("ERRORESSSSS")
+		fmt.Println(validationErrors)
+		output.ErrorsDataType = append(output.ErrorsDataType, validationErrors...)
+		return output, nil
+	}
+
 	return output, nil
 
-	// return "change", nil
 }
 
 func main() {
@@ -341,4 +311,70 @@ func OpenFile(filename s3.GetObjectOutput) (*excelize.File, error) {
 	f, _ := excelize.OpenReader(buff)
 
 	return f, nil
+}
+
+func ValidarCaracter(valor string, campo string) (bool, error) {
+	return true, nil
+}
+
+func ValidarNumero(valor string, campo string) (bool, error) {
+	_, err := strconv.ParseFloat(valor, 64)
+	if err != nil {
+		return false, fmt.Errorf("el valor %s del campo %s no es un numero", valor, campo)
+	}
+	return true, nil
+}
+
+func ValidarFormatoFecha(fecha string, formato string, campo string) (bool, error) {
+	_, err := time.Parse(formato, fecha)
+	if err != nil {
+		return false, fmt.Errorf("fecha %s del campo %s no cumple con el formato %s", fecha, campo, formato)
+	}
+	return true, nil
+}
+
+type ValidationReturn interface{}
+type FuncError struct {
+	Transaccion string
+	Registro    int    `json:"registro"`
+	Atributo    string `json:"atributo"`
+	Funcion     string
+	Error       string
+}
+
+type FuncValidation struct {
+	Registro int    `json:"registro"`
+	Atributo string `json:"atributo"`
+	Funcion  string
+	Valid    bool `json:"valid"`
+}
+
+func Validations(eventArray []RegistroAtributoValorFuncionArgumento) []FuncError {
+
+	var errores []FuncError
+
+	for _, e := range eventArray {
+
+		for i := 0; i < len(e.Funcion); i++ {
+
+			var err error
+
+			switch e.Funcion[i] {
+			case "ValidarCaracter":
+				_, err = ValidarCaracter(e.Valor, e.Atributo)
+			case "ValidarNumero":
+				_, err = ValidarNumero(e.Valor, e.Atributo)
+			case "ValidarFormatoFecha":
+				_, err = ValidarFormatoFecha(e.Valor, e.Argumentos[i][0], e.Atributo)
+			}
+
+			if err != nil {
+				errores = append(errores, FuncError{Transaccion: e.Transaccion, Registro: e.Registro, Atributo: e.Atributo, Funcion: e.Funcion[i], Error: err.Error()})
+			}
+		}
+
+	}
+
+	return errores
+
 }

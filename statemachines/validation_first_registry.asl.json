@@ -1,28 +1,76 @@
 {
   "Comment": "ValidationFirst Registry",
-  "StartAt": "First Registry",
+  "StartAt": "Read Filename",
   "States": {
+    "Read Filename":{
+      "Type": "Task",
+      "Resource": "${ReadFilenameFunctionArn}",
+      "OutputPath": "$",
+      "Next": "Get Id Structure and Id Process With nPolicy"
+    },
+    "Get Id Structure and Id Process With nPolicy":{
+      "Type": "Task",
+      "Resource": "${DDBQuery}",
+      "Parameters": {
+        "TableName": "${TABLE_NAME_PROCESSES}",
+        "IndexName": "sk-policy",
+        "KeyConditionExpression": "sk = :sk AND policy = :policy",
+        "ExpressionAttributeValues": {
+          ":sk": {
+              "S": "PROCESO"
+          },
+          ":policy": {
+              "S.$": "$.NPolicy"
+          }
+        },
+        "ProjectionExpression": "structure, pk"
+    },
+      "ResultPath": "$.pkstructure",
+      "Next": "First Registry"
+    },
     "First Registry":{
       "Type": "Task",
-      "Resource": "${ValidationFirstRegistryFunctionArn}",
-      "OutputPath": "$",
-      "Next": "MapState"
-    },
-    "MapState":{
-      "Type": "Map",
-      "ItemsPath": "$.Array",
-      "MaxConcurrency": 40,
-      "Iterator": {
-          "StartAt": "Validate",
-          "States": {
-              "Validate": {
-                  "Type": "Task",
-                  "Resource": "${ValidationFunctionArn}",
-                  "End": true
-              }
-          }
+      "Parameters": {
+        "filename.$": "$.Filename",
+        "structure.$": "$.pkstructure.Items[0].structure.S"
       },
+      "Resource": "${ValidationFirstRegistryFunctionArn}",
+      "ResultPath": "$.taskresult",
+      "Next": "Update Process ???"
+    },
+    "Update Process ???": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "And": [
+              {
+                  "Variable": "$.taskresult.Errors",
+                  "IsNull": true
+              },
+              {
+                  "Variable": "$.taskresult.ErrorsDataType",
+                  "IsNull": true
+              }
+          ],
+          "Next": "Update Dynamo Process"
+        }
+      ],
+      "Default": "Not Update Process"
+    },
+    "Update Dynamo Process":{
+      "Type": "Task",
+      "Parameters": {
+        "filename.$": "$.Filename",
+        "pk.$": "$.pkstructure.Items[0].pk.S"
+      },
+      "Resource": "${GagaFunctionArn}",
+      "Next": "Update Dynamo Process"
+    },
+    "Not Update Process":{
+      "Type": "Pass",
       "End": true
     }
+
+    
   }
 }

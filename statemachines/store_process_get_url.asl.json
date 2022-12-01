@@ -39,6 +39,9 @@
                     "S":"PROCESO"
                 }
             },
+            "ExpressionAttributeNames":{
+                "#transaction": "transaction"
+            },
             "ExpressionAttributeValues": {
                 ":policy":{
                     "S.$":"$$.Execution.Input.input.policy"
@@ -52,8 +55,8 @@
                 ":salesChannel":{
                     "S.$":"$$.Execution.Input.input.salesChannel"
                 },
-                ":Ttransaction":{
-                    "S.$":"$$.Execution.Input.input.Ttransaction"
+                ":transaction":{
+                    "S.$":"$$.Execution.Input.input.transaction"
                 },
                 ":declarationPeriod":{
                     "S.$":"$$.Execution.Input.input.declarationPeriod"
@@ -65,7 +68,7 @@
                     "S.$":"$$.Execution.Input.input.structure"
                 }
             },
-            "UpdateExpression": "SET  policy = :policy, contractor = :contractor, product = :product, salesChannel = :salesChannel, Ttransaction = :Ttransaction, declarationPeriod = :declarationPeriod, ruc = :ruc, structure = :structure"
+            "UpdateExpression": "SET  policy = :policy, contractor = :contractor, product = :product, salesChannel = :salesChannel, #transaction = :transaction, declarationPeriod = :declarationPeriod, ruc = :ruc, structure = :structure"
         },
         "Next": "Generate URL"
     },
@@ -75,7 +78,7 @@
         "Parameters": {
             "filename.$" : "$$.Execution.Input.filename"
         },
-        "Resource": "${InFunctionArn}",
+        "Resource": "${GetURLFunctionArn}",
         "OutputPath": "$",
         "Next": "Send URL"
       },
