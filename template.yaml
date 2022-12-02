@@ -529,8 +529,13 @@ Resources:
       Type: EXPRESS
       Name: validation_first_registry
       DefinitionSubstitutions:
-        ValidationFunctionArn: !GetAtt ValidationFunction.Arn
+        GagaFunctionArn: !GetAtt GagaFunction.Arn
         ValidationFirstRegistryFunctionArn: !GetAtt ValidationFirstRegistryFunction.Arn
+        ReadFilenameFunctionArn: !GetAtt ReadFilenameFunction.Arn
+        DDBQuery: arn:aws:states:::aws-sdk:dynamodb:query
+        TABLE_NAME_CONFIGURADOR: !Ref DBConfigurador
+        TABLE_NAME_PROCESSES: !Ref DBProcesses
+
       Logging:
         Destinations:
           - CloudWatchLogsLogGroup:
@@ -538,10 +543,16 @@ Resources:
         IncludeExecutionData: true
         Level: ALL  
       Policies: 
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DBConfigurador
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DBProcesses
         - LambdaInvokePolicy:
-            FunctionName: !Ref ValidationFunction
+            FunctionName: !Ref GagaFunction
         - LambdaInvokePolicy:
             FunctionName: !Ref ValidationFirstRegistryFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref ReadFilenameFunction
         - CloudWatchLogsFullAccess
       Events:
         EBRule:
