@@ -231,7 +231,7 @@ type Mutation {
   storeStructure(event: StructureInput!): Boolean #store
   # # validations(validations: InputValidations ): String
   # deleteStructure(structureId:String!):Boolean # falta eliminar una estructura
-  # activeStructure(status:Boolean):Boolean # falta activar o desactivar una estructura
+  activeStructure(structureId: Int, state:Boolean):Boolean # falta activar o desactivar una estructura
   # # cloneStructure(???): Boolean # falta clonar una estructura
   # updateStructure(event: StructureInput!): Boolean #borrar y crear?
 
@@ -274,7 +274,7 @@ type Query{
   #####################################################
   ####################ESTRUCTURAS######################
   #####################################################
-  # getStructure(structureId:String!):Structure  # falta obtener una estructura
+  getStructure(structureId:Int!):Structure  # falta obtener una estructura
   # getAllStructures: [Structure]    # listar estructuras posiblemente?
 
   #####################################################

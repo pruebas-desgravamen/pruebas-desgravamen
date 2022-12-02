@@ -29,6 +29,7 @@ Resources:
                   # - !Ref ValidateCellStateMachine
                   - !Ref ValidationsStateMachine
                   - !Ref ValidationFirstRegistryStateMachine
+                  - !Ref ActiveStructureStateMachine
               - Effect: Allow
                 Action:
                   - dynamodb:GetItem
@@ -333,7 +334,191 @@ Resources:
             #end
           ]
         }
-        
+
+  GetStructureResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Query
+      FieldName: getStructure
+      DataSourceName: !GetAtt DBConfiguradorDataSource.Name
+      RequestMappingTemplate: >
+       {
+          "version": "2017-02-28",
+          "operation": "Query",
+          "query": {
+            "expression": "pk = :pk",
+            "expressionValues": {
+              #set($pk = "STR-"+${ctx.args.structureId})
+              ":pk": {
+                "S": "$pk"
+              }
+            }
+          }
+       }
+      ResponseMappingTemplate: >
+        {   
+            #set($structureName ="")
+            #set($transaction ="")
+            #set($branch ="")
+            #set($header ="")
+            #set($certificateByRole ="")
+            #set($rowsOrderByRole ="")
+            #set($fileFormat ="")
+            #set($dateFormat ="")
+            #set($policy = [])
+            #set($credit = [])
+            #set($role = [])
+            #set($certificate = [])
+            #set($client = [])
+            #set($attributes = [])
+            #set($policyent = []) 
+
+            #foreach($item in $ctx.result.items)
+              #if($item.DataObject == "details")
+                #set($structureName = $item.structureName)
+                #set($transaction = $item.transaction)
+                #set($branch = $item.branch)
+                #set($header = $item.header)
+                #set($certificateByRole = $item.certificateByRole)
+                #set($rowsOrderByRole = $item.rowsOrderByRole)
+                #set($fileFormat = $item.fileFormat)
+                #set($dateFormat = $item.dateFormat)
+              #end
+
+              #if($item.DataObject == "policy")
+                  $util.quiet($policy.add(
+                  {
+                    "product": $item.product,
+                    "nPolicy": $item.nPolicy,
+                    "contractor": $item.contractor,
+                    "salesChannel": $item.salesChannel,
+                    "startDate": $item.startDate,
+                    "expirDate": $item.expirDate,
+                    "currency": $item.currency,
+                    "ruc": $item.ruc,
+                    "functions": $item.functions
+                  }
+                ))
+              #end
+
+              #if($item.DataObject == "entityCredit")
+                  $util.quiet($credit.add(
+                  {
+                    "id": $item.id,
+                    "value": $item.value,
+                    "description": $item.description,
+                    "origin": $item.origin
+                  }
+                ))
+              #end
+
+              #if($item.DataObject == "entityRole")
+                  $util.quiet($role.add(
+                  {
+                    "id": $item.id,
+                    "value": $item.value,
+                    "description": $item.description,
+                    "origin": $item.origin
+                  }
+                ))
+              #end
+
+              #if($item.DataObject == "entityCertificate")
+                  $util.quiet($certificate.add(
+                  {
+                    "id": $item.id,
+                    "value": $item.value,
+                    "description": $item.description,
+                    "origin": $item.origin
+                  }
+                ))
+              #end
+
+              #if($item.DataObject == "entityClient")
+                  $util.quiet($client.add(
+                  {
+                    "id": $item.id,
+                    "value": $item.value,
+                    "description": $item.description,
+                    "origin": $item.origin
+                  }
+                ))
+              #end
+
+              #if($item.DataObject == "attributes")
+                  $util.quiet($attributes.add(
+                  {
+                    "id": $item.id,
+                    "tipo": $item.tipo,
+                    "value": $item.value,
+                    "description": $item.description,
+                    "origin": $item.origin
+                  }
+                ))
+              #end
+
+              #if($item.DataObject == "entityPolicy")
+                  $util.quiet($policyent.add(
+                  {
+                    "id": $item.id,
+                    "value": $item.value,
+                    "description": $item.description,
+                    "origin": $item.origin
+                  }
+                ))
+              #end
+
+            #end   
+
+            "structureName": $util.toJson($structureName),
+            "transaction": $util.toJson($transaction),
+            "branch": $util.toJson($branch),
+            "header": $util.toJson($header),
+            "certificateByRole": $util.toJson($certificateByRole),
+            "rowsOrderByRole": $util.toJson($rowsOrderByRole),
+            "fileFormat": $util.toJson($fileFormat),
+            "dateFormat": $util.toJson($dateFormat),
+            "policyCollection": $util.toJson($policy),
+            "attributes": $util.toJson($attributes),
+            "client": $util.toJson($client),
+            "certificate": $util.toJson($certificate),
+            "role": $util.toJson($role),
+            "policy": $util.toJson($policyent),
+            "credit": $util.toJson($credit),
+
+        }
+
+  ActiveStructureResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Mutation
+      FieldName: activeStructure
+      DataSourceName: !GetAtt StepFunctionsHttpDataSource.Name
+      RequestMappingTemplate: !Sub >
+        {
+          #set($stateString = "Activo")
+          #if(!$context.args.state)
+            #set($stateString = "Inactivo")
+          #end
+          "version": "2018-05-29",
+          "method": "POST",
+          "resourcePath": "/",
+          "params": {
+            "headers": {
+              "content-type": "application/x-amz-json-1.0",
+              "x-amz-target":"AWSStepFunctions.StartSyncExecution"
+            },
+            "body": {
+              "stateMachineArn": "${ActiveStructureStateMachine}",
+              "input": "{ \"structureId\": $util.escapeJavaScript($util.toJson($ctx.args.structureId)), \"state\": $util.escapeJavaScript($util.toJson($stateString))}"
+            }
+          }
+        }
+      ResponseMappingTemplate: $util.parseJson($ctx.result.body).output
+
  ###################      
  ## STATEMACHINES ##
  ###################
@@ -481,7 +666,26 @@ Resources:
                 - "Object Created"
               source:
                 - aws.s3 
-
+  ActiveStructureStateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      DefinitionUri: statemachines/activeStructure.asl.json
+      Type: EXPRESS
+      Name: ActiveStructureStateMachine
+      DefinitionSubstitutions:
+        DDBUpdateItem: !Sub arn:${AWS::Partition}:states:::dynamodb:updateItem
+        DDBQuery: arn:aws:states:::aws-sdk:dynamodb:query     
+        TABLE_NAME_CONFIGURADOR: !Ref DBConfigurador
+      Logging:
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt StateMachineActiveLogs.Arn
+        IncludeExecutionData: true
+        Level: ALL  
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DBConfigurador
+        - CloudWatchLogsFullAccess
  ###############      
  ## LOGS      ##
  ###############  
@@ -516,6 +720,11 @@ Resources:
       LogGroupName: !Sub /aws/vendedlogs/states/${AWS::StackName}/store-process-get-url
       RetentionInDays: 3
 
+  StateMachineActiveLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/vendedlogs/states/${AWS::StackName}/StateMachineActiveLogs
+      RetentionInDays: 3 
 
  ###############      
  ## DynamoDB  ##
@@ -567,8 +776,6 @@ Resources:
           AttributeType: S
         - AttributeName: nPolicy
           AttributeType: S
-        - AttributeName: structureId
-          AttributeType: N
         - AttributeName: DataObject
           AttributeType: S
         - AttributeName: ruc
@@ -587,14 +794,6 @@ Resources:
           - AttributeName: pk
             KeyType: HASH
           - AttributeName: nPolicy
-            KeyType: RANGE
-        Projection:
-          ProjectionType: ALL ##CAMBIARRR
-      - IndexName: id-structure
-        KeySchema:
-          - AttributeName: structureId
-            KeyType: HASH
-          - AttributeName: sk
             KeyType: RANGE
         Projection:
           ProjectionType: ALL ##CAMBIARRR

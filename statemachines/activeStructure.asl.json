@@ -1,0 +1,94 @@
+{
+    "Comment": "This is a comment",
+    "StartAt": "Update Detail State",
+    "States": {
+        "Update Detail State": {
+            "Type": "Task",
+            "Resource": "${DDBUpdateItem}",
+            "Parameters": {
+                "TableName": "${TABLE_NAME_CONFIGURADOR}",
+                "Key": {
+                    "pk": {
+                        "S.$": "States.Format('STR-{}', States.Format('{}',$$.Execution.Input.structureId))"
+                    },
+                    "sk": {
+                        "S": "DETAIL"
+                    }
+                },
+                "UpdateExpression": "SET #state = :state",
+                "ExpressionAttributeNames": {
+                    "#state": "state"
+                },
+                "ExpressionAttributeValues": {
+                    ":state": {
+                        "S.$": "$$.Execution.Input.state"
+                    }
+                }
+            },
+            "ResultPath": null,
+            "Next": "Get policies states"
+        },
+        "Get policies states": {
+            "Type": "Task",
+            "Resource": "${DDBQuery}",
+            "Parameters": {
+                "TableName": "${TABLE_NAME_CONFIGURADOR}",
+                "KeyConditionExpression": "pk = :pk and begins_with(sk, :sk)",
+                "ExpressionAttributeValues": {
+                    ":pk": {
+                        "S.$": "States.Format('STR-{}', States.Format('{}',$$.Execution.Input.structureId))"
+                    },
+                    ":sk": {
+                        "S": "POL-"
+                    }
+                }
+                
+            },
+            
+            "ResultPath":"$.policies",
+            "Next": "Update policies states"
+        },
+        "Update policies states": {
+            "Type": "Map",
+            "ItemsPath": "$.policies.Items",
+            "Iterator": {
+                "StartAt": "Update policy state",
+                "States": {
+                    "Update policy state": {
+                        "Type": "Task",
+                        "Resource": "${DDBUpdateItem}",
+                        "Parameters": {
+                            "TableName": "${TABLE_NAME_CONFIGURADOR}",
+                            "Key": {
+                                "pk": {
+                                    "S.$": "$.pk.S"
+                                },
+                                "sk": {
+                                    "S.$": "$.sk.S"
+                                }
+                            },
+                            "UpdateExpression": "SET #state = :state",
+                            "ExpressionAttributeNames": {
+                                "#state": "state"
+                            },
+                            "ExpressionAttributeValues": {
+                                ":state": {
+                                    "S.$": "$$.Execution.Input.state"
+                                }
+                            }
+                        },
+                        "End": true
+                    }
+                }
+            },
+            "Next": "Final State"
+            },
+
+        "Final State": {
+            "Type": "Pass",
+            "Parameters": true,
+            "End": true
+        }
+        
+    }
+}
