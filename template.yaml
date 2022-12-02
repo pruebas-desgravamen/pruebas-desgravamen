@@ -228,13 +228,13 @@ Resources:
       ResponseMappingTemplate: $util.toJson($context.result)
 
   # OKAY: true
-  GetStructurePolicy:
+  StoreProcessXPolicyResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: AppSyncSchema
     Properties:
       ApiId: !GetAtt AppSyncApi.ApiId
       TypeName: Query
-      FieldName: getStructurePolicy
+      FieldName: storeProcessXPolicy
       DataSourceName: !GetAtt DBConfiguradorDataSource.Name
       RequestMappingTemplate: >
         {
@@ -247,12 +247,11 @@ Resources:
         	    ":DataObject" : $util.dynamodb.toDynamoDBJson("policy"),
         	    ":nPolicy" : $util.dynamodb.toDynamoDBJson($ctx.args.policy)
             }
-          },
-          "limit" : 10
+          }
         }
       ResponseMappingTemplate: > 
         {
-          "storeProcessPolicyInformation": [
+          "structurePolicy": [
             #foreach($item in $ctx.result.items) {
               "contractor": $util.toJson($item['contractor']),
               "product": $util.toJson($item['product']),
@@ -264,13 +263,13 @@ Resources:
         }
 
   # OKAY: true
-  GetStructureRuc:
+  StoreProcessXRucResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: AppSyncSchema
     Properties:
       ApiId: !GetAtt AppSyncApi.ApiId
       TypeName: Query
-      FieldName: getStructureRuc
+      FieldName: storeProcessXRuc
       DataSourceName: !GetAtt DBConfiguradorDataSource.Name
       RequestMappingTemplate: >
         {
@@ -278,16 +277,15 @@ Resources:
           "operation": "Query",
           "index": "ruc-sk",
           "query": {
-            "expression": "ruc = :ruc AND begins_with(sk, :sk)",
+            "expression": "ruc = :ruc",
             "expressionValues":	{              
-        	    ":ruc" : $util.dynamodb.toDynamoDBJson($ctx.args.ruc),
-        	    ":sk" : $util.dynamodb.toDynamoDBJson("POL-")
+        	    ":ruc" : $util.dynamodb.toDynamoDBJson($ctx.args.ruc)
             }
           }
         }
       ResponseMappingTemplate: > 
         {
-          "storeProcessPolicyInformation": [
+          "structureRuc": [
             #foreach($item in $ctx.result.items) {
               "contractor": $util.toJson($item['contractor']),
               "product": $util.toJson($item['product']),
@@ -300,13 +298,13 @@ Resources:
         }
 
   # OKAY: true
-  GetStructureContractor:
+  StoreProcessXContractorResolver:
     Type: AWS::AppSync::Resolver
     DependsOn: AppSyncSchema
     Properties:
       ApiId: !GetAtt AppSyncApi.ApiId
       TypeName: Query
-      FieldName: getStructureContractor
+      FieldName: storeProcessXContractor
       DataSourceName: !GetAtt DBConfiguradorDataSource.Name
       RequestMappingTemplate: >
         {
@@ -314,16 +312,15 @@ Resources:
           "operation": "Query",
           "index": "contractor-sk",
           "query": {
-            "expression": "contractor = :contractor AND begins_with(sk, :sk)",
+            "expression": "contractor = :contractor",
             "expressionValues":	{              
-        	    ":ruc" : $util.dynamodb.toDynamoDBJson($ctx.args.contractor),
-        	    ":sk" : $util.dynamodb.toDynamoDBJson("POL-")
+        	    ":contractor" : $util.dynamodb.toDynamoDBJson($ctx.args.contractor)
             }
           }
         }
       ResponseMappingTemplate: > 
         {
-          "storeProcessPolicyInformation": [
+          "structureContractor": [
             #foreach($item in $ctx.result.items) {
               "ruc": $util.toJson($item['ruc']),
               "product": $util.toJson($item['product']),
