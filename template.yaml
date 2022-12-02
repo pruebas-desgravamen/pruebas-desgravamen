@@ -29,10 +29,7 @@ Resources:
                   # - !Ref ValidateCellStateMachine
                   - !Ref ValidationsStateMachine
                   - !Ref ValidationFirstRegistryStateMachine
-<<<<<<< Updated upstream
                   - !Ref ActiveStructureStateMachine
-=======
->>>>>>> Stashed changes
                   - !Ref ValidationFirstRegistryStateMachine
               - Effect: Allow
                 Action:
