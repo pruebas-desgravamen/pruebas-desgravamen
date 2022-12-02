@@ -29,7 +29,10 @@ Resources:
                   # - !Ref ValidateCellStateMachine
                   - !Ref ValidationsStateMachine
                   - !Ref ValidationFirstRegistryStateMachine
+<<<<<<< Updated upstream
                   - !Ref ActiveStructureStateMachine
+=======
+>>>>>>> Stashed changes
               - Effect: Allow
                 Action:
                   - dynamodb:GetItem
@@ -627,6 +630,7 @@ Resources:
       Type: EXPRESS
       Name: validation_first_registry
       DefinitionSubstitutions:
+<<<<<<< Updated upstream
         GagaFunctionArn: !GetAtt GagaFunction.Arn
         ValidationFirstRegistryFunctionArn: !GetAtt ValidationFirstRegistryFunction.Arn
         ReadFilenameFunctionArn: !GetAtt ReadFilenameFunction.Arn
@@ -634,6 +638,10 @@ Resources:
         TABLE_NAME_CONFIGURADOR: !Ref DBConfigurador
         TABLE_NAME_PROCESSES: !Ref DBProcesses
 
+=======
+        ValidationFunctionArn: !GetAtt ValidationFunction.Arn
+        ValidationFirstRegistryFunctionArn: !GetAtt ValidationFirstRegistryFunction.Arn
+>>>>>>> Stashed changes
       Logging:
         Destinations:
           - CloudWatchLogsLogGroup:
@@ -641,6 +649,7 @@ Resources:
         IncludeExecutionData: true
         Level: ALL  
       Policies: 
+<<<<<<< Updated upstream
         - DynamoDBCrudPolicy:
             TableName: !Ref DBConfigurador
         - DynamoDBCrudPolicy:
@@ -651,6 +660,12 @@ Resources:
             FunctionName: !Ref ValidationFirstRegistryFunction
         - LambdaInvokePolicy:
             FunctionName: !Ref ReadFilenameFunction
+=======
+        - LambdaInvokePolicy:
+            FunctionName: !Ref ValidationFunction
+        - LambdaInvokePolicy:
+            FunctionName: !Ref ValidationFirstRegistryFunction
+>>>>>>> Stashed changes
         - CloudWatchLogsFullAccess
       Events:
         EBRule:
@@ -666,6 +681,7 @@ Resources:
                 - "Object Created"
               source:
                 - aws.s3 
+<<<<<<< Updated upstream
   ActiveStructureStateMachine:
     Type: AWS::Serverless::StateMachine
     Properties:
@@ -686,6 +702,9 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref DBConfigurador
         - CloudWatchLogsFullAccess
+=======
+
+>>>>>>> Stashed changes
  ###############      
  ## LOGS      ##
  ###############  
@@ -1018,12 +1037,20 @@ Resources:
       Environment:
         Variables:
           BUCKET_NAME: !Ref DataBucket
+<<<<<<< Updated upstream
           TABLA_NAME_TRAMAS: !Ref DBProcesses
+=======
+          TABLA_NAME_TRAMAS: !Ref DBTramas
+>>>>>>> Stashed changes
           TABLA_NAME_CONFIGURADOR: !Ref DBConfigurador
           REGION: !Sub ${AWS::Region}
       Policies: 
         - DynamoDBCrudPolicy:
+<<<<<<< Updated upstream
             TableName: !Ref DBProcesses
+=======
+            TableName: !Ref DBTramas
+>>>>>>> Stashed changes
         - DynamoDBCrudPolicy:
             TableName: !Ref DBConfigurador
         - AWSLambdaBasicExecutionRole
