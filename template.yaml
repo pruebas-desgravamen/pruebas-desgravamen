@@ -941,6 +941,28 @@ Resources:
                 - "Object Created"
               source:
                 - aws.s3 
+  ValidationFirstRegistryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/validation-first-registry
+      Handler: validation-first-registry
+      Runtime: go1.x
+      MemorySize: 2048 
+      Timeout: 300
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref DataBucket
+          TABLA_NAME_TRAMAS: !Ref DBProcesses
+          TABLA_NAME_CONFIGURADOR: !Ref DBConfigurador
+          REGION: !Sub ${AWS::Region}
+      Policies: 
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DBProcesses
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DBConfigurador
+        - AWSLambdaBasicExecutionRole
+        - S3ReadPolicy:
+            BucketName: !Ref DataBucket
 
   GagaFunction:         
     Type: AWS::Serverless::Function
