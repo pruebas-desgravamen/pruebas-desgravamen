@@ -631,6 +631,12 @@ Resources:
       LogGroupName: !Sub /aws/vendedlogs/states/${AWS::StackName}/validation
       RetentionInDays: 3
       
+  ValidationFirstRegistryLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/vendedlogs/states/${AWS::StackName}/validation-first-registry
+      RetentionInDays: 3
+      
   TransformCSV:
     Type: AWS::Logs::LogGroup
     Properties:
