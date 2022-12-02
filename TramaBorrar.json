@@ -1,79 +1,78 @@
 {
-	"event":{
-	   "datosGenerales":{
-		  "nombreEstructura":"Primera Estructura",
-		  "transaccion":"x",
-		  "ramo":"x",
-		  "datosCabecera":"x",
-		  "certificadoPorRol":"x",
-		  "filasOrdenadasPorRol":"x",
-		  "formatoArchivo":"x"
-	   },
-	   "coleccionPolizas":[
-		  {
-			 "producto":"Producto 1",
-			 "nPoliza":"1000",
-			 "contratante":"x",
-			 "canalVenta":"x",
-			 "moneda":"x",
-			 "vigencia":"x",
-			 "reglas":[
-				
-			 ]
-		  },
-		  {
-			 "producto":"Producto 2",
-			 "nPoliza":"2000",
-			 "contratante":"x",
-			 "canalVenta":"x",
-			 "moneda":"x",
-			 "vigencia":"x",
-			 "reglas":[
-				
-			 ]
-		  },
-		  {
-			 "producto":"Producto 3",
-			 "nPoliza":"3000",
-			 "contratante":"x",
-			 "canalVenta":"x",
-			 "moneda":"x",
-			 "vigencia":"x",
-			 "reglas":[
-				
-			 ]
-		  },
-		  {
-			 "producto":"Producto 4",
-			 "nPoliza":"4000",
-			 "contratante":"x",
-			 "canalVenta":"x",
-			 "moneda":"x",
-			 "vigencia":"x",
-			 "reglas":[
-				
-			 ]
-		  }
-	   ],
-	   "lectura":[
+  "event": {
+      "structureName": "Primera Estructura",
+      "transaction": "x",
+      "branch": "x",
+      "header": "x",
+      "certificateByRole": "x",
+      "rowsOrderByRole": "x",
+      "fileFormat": "x",
+      "dateFormat": "x",
+    "policyCollection": [
+      {
+        "product": "Producto 1",
+        "nPolicy": "1000",
+        "contractor": "x",
+        "salesChannel": "x",
+        "currency": "x",
+        "startDate": "x",
+        "expirDate": "x",
+        "ruc": "x",
+        "functions": []
+      },
+      {
+        "product": "Producto 2",
+        "nPolicy": "2000",
+        "contractor": "x",
+        "salesChannel": "x",
+        "currency": "x",
+        "startDate": "x",
+        "expirDate": "x",
+        "ruc": "x",
+        "functions": []
+      },
+      {
+        "product": "Producto 3",
+        "nPolicy": "3000",
+        "contractor": "x",
+        "salesChannel": "x",
+        "currency": "x",
+        "startDate": "x",
+        "expirDate": "x",
+        "ruc": "x",
+        "functions": []
+      },
+      {
+        "product": "Producto 4",
+        "nPolicy": "4000",
+        "contractor": "x",
+        "salesChannel": "x",
+        "currency": "x",
+        "startDate": "x",
+        "expirDate": "x",
+        "ruc": "x",
+        "functions": []
+      }
+    ],
+    "attributes": [
 		  {
 			 "id":"1",
-			 "atributo":"NRO CREDITO",
-			 "tipoDato":"x",
-			 "obligatorio":"x",
-			 "valorUnico":"x",
-			 "funcion":[
+			 "attribute":"NRO CREDITO",
+			 "dataType":"x",
+			 "required":"x",
+			 "uniqueValue":"x",
+			 "function":[
 				"ValidarNumero"
 			 ],
-			 "origen":[
+			 "origin":[
 				"x",
 				"y",
 				"z"
 			 ],
-			 "argumento":[
+			 "argument":[
 				""
 			 ],
-			 "dominio":[
+			 "domain":[
 				"x",
 				"y",
 				"z"
@@ -81,22 +80,22 @@
 		  },
 		  {
 			 "id":"2",
-			 "atributo":"TIPO DE DOCUMENTO DE IDENTIDAD",
-			 "tipoDato":"x",
-			 "obligatorio":"x",
-			 "valorUnico":"x",
-			 "funcion":[
+			 "attribute":"TIPO DE DOCUMENTO DE IDENTIDAD",
+			 "dataType":"x",
+			 "required":"x",
+			 "uniqueValue":"x",
+			 "function":[
 				"ValoresPosibles"
 			 ],
-			 "origen":[
+			 "origin":[
 				"x",
 				"y",
 				"z"
 			 ],
-			 "argumento":[
+			 "argument":[
 				"DNI,RUC"
 			 ],
-			 "dominio":[
+			 "domain":[
 				"x",
 				"y",
 				"z"
@@ -104,22 +103,22 @@
 		  },
 		  {
 			 "id":"3",
-			 "atributo":"NRO DE DOCUMENTO DE IDENTIDAD",
-			 "tipoDato":"x",
-			 "obligatorio":"x",
-			 "valorUnico":"x",
-			 "funcion":[
+			 "attribute":"NRO DE DOCUMENTO DE IDENTIDAD",
+			 "dataType":"x",
+			 "required":"x",
+			 "uniqueValue":"x",
+			 "function":[
 				"ValidarNumero"
 			 ],
-			 "origen":[
+			 "origin":[
 				"x",
 				"y",
 				"z"
 			 ],
-			 "argumento":[
+			 "argument":[
 				""
 			 ],
-			 "dominio":[
+			 "domain":[
 				"x",
 				"y",
 				"z"
@@ -127,22 +126,22 @@
 		  },
 		  {
 			 "id":"4",
-			 "atributo":"FECHA DE INICIO DE VIGENCIA",
-			 "tipoDato":"x",
-			 "obligatorio":"x",
-			 "valorUnico":"x",
-			 "funcion":[
+			 "attribute":"FECHA DE INICIO DE VIGENCIA",
+			 "dataType":"x",
+			 "required":"x",
+			 "uniqueValue":"x",
+			 "function":[
 				"ValidarFormatoFecha"
 			 ],
-			 "origen":[
+			 "origin":[
 				"x",
 				"y",
 				"z"
 			 ],
-			 "argumento":[
+			 "argument":[
 				"01/02/2006"
 			 ],
-			 "dominio":[
+			 "domain":[
 				"x",
 				"y",
 				"z"
@@ -150,22 +149,22 @@
 		  },
 		  {
 			 "id":"5",
-			 "atributo":"APELLIDO MATERNO",
-			 "tipoDato":"x",
-			 "obligatorio":"x",
-			 "valorUnico":"x",
-			 "funcion":[
-				
+			 "attribute":"APELLIDO MATERNO",
+			 "dataType":"x",
+			 "required":"x",
+			 "uniqueValue":"x",
+			 "function":[
+				"ValidarCaracter"
 			 ],
-			 "origen":[
+			 "origin":[
 				"x",
 				"y",
 				"z"
 			 ],
-			 "argumento":[
-				
+			 "argument":[
+				""
 			 ],
-			 "dominio":[
+			 "domain":[
 				"x",
 				"y",
 				"z"
@@ -173,22 +172,22 @@
 		  },
 		  {
 			 "id":"6",
-			 "atributo":"APELLIDO PATERNO",
-			 "tipoDato":"x",
-			 "obligatorio":"x",
-			 "valorUnico":"x",
-			 "funcion":[
-				
+			 "attribute":"APELLIDO PATERNO",
+			 "dataType":"x",
+			 "required":"x",
+			 "uniqueValue":"x",
+			 "function":[
+				"ValidarCaracter"
 			 ],
-			 "origen":[
+			 "origin":[
 				"x",
 				"y",
 				"z"
 			 ],
-			 "argumento":[
-				
+			 "argument":[
+				""
 			 ],
-			 "dominio":[
+			 "domain":[
 				"x",
 				"y",
 				"z"
@@ -196,22 +195,22 @@
 		  },
 		  {
 			 "id":"7",
-			 "atributo":"NOMBRES",
-			 "tipoDato":"x",
-			 "obligatorio":"x",
-			 "valorUnico":"x",
-			 "funcion":[
-				
+			 "attribute":"NOMBRES",
+			 "dataType":"x",
+			 "required":"x",
+			 "uniqueValue":"x",
+			 "function":[
+				"ValidarCaracter"
 			 ],
-			 "origen":[
+			 "origin":[
 				"x",
 				"y",
 				"z"
 			 ],
-			 "argumento":[
-				
+			 "argument":[
+				""
 			 ],
-			 "dominio":[
+			 "domain":[
 				"x",
 				"y",
 				"z"
@@ -219,22 +218,22 @@
 		  },
 		  {
 			 "id":"8",
-			 "atributo":"DIRECCION",
-			 "tipoDato":"x",
-			 "obligatorio":"x",
-			 "valorUnico":"x",
-			 "funcion":[
-				
+			 "attribute":"DIRECCION",
+			 "dataType":"x",
+			 "required":"x",
+			 "uniqueValue":"x",
+			 "function":[
+				"ValidarCaracter"
 			 ],
-			 "origen":[
+			 "origin":[
 				"x",
 				"y",
 				"z"
 			 ],
-			 "argumento":[
-				
+			 "argument":[
+				""
 			 ],
-			 "dominio":[
+			 "domain":[
 				"x",
 				"y",
 				"z"
@@ -242,22 +241,22 @@
 		  },
 		  {
 			 "id":"9",
-			 "atributo":"DISTRITO",
-			 "tipoDato":"x",
-			 "obligatorio":"x",
-			 "valorUnico":"x",
-			 "funcion":[
-				
+			 "attribute":"DISTRITO",
+			 "dataType":"x",
+			 "required":"x",
+			 "uniqueValue":"x",
+			 "function":[
+				"ValidarCaracter"
 			 ],
-			 "origen":[
+			 "origin":[
 				"x",
 				"y",
 				"z"
 			 ],
-			 "argumento":[
-				
+			 "argument":[
+				""
 			 ],
-			 "dominio":[
+			 "domain":[
 				"x",
 				"y",
 				"z"
@@ -265,22 +264,22 @@
 		  },
 		  {
 			 "id":"10",
-			 "atributo":"PROVINCIA",
-			 "tipoDato":"x",
-			 "obligatorio":"x",
-			 "valorUnico":"x",
-			 "funcion":[
-				
+			 "attribute":"PROVINCIA",
+			 "dataType":"x",
+			 "required":"x",
+			 "uniqueValue":"x",
+			 "function":[
+				"ValidarCaracter"
 			 ],
-			 "origen":[
+			 "origin":[
 				"x",
 				"y",
 				"z"
 			 ],
-			 "argumento":[
-				
+			 "argument":[
+				""
 			 ],
-			 "dominio":[
+			 "domain":[
 				"x",
 				"y",
 				"z"
@@ -288,22 +287,22 @@
 		  },
 		  {
 			 "id":"11",
-			 "atributo":"DEPARTAMENTO",
-			 "tipoDato":"x",
-			 "obligatorio":"x",
-			 "valorUnico":"x",
-			 "funcion":[
-				
+			 "attribute":"DEPARTAMENTO",
+			 "dataType":"x",
+			 "required":"x",
+			 "uniqueValue":"x",
+			 "function":[
+				"ValidarCaracter"
 			 ],
-			 "origen":[
+			 "origin":[
 				"x",
 				"y",
 				"z"
 			 ],
-			 "argumento":[
-				
+			 "argument":[
+				""
 			 ],
-			 "dominio":[
+			 "domain":[
 				"x",
 				"y",
 				"z"
@@ -311,22 +310,22 @@
 		  },
 		  {
 			 "id":"12",
-			 "atributo":"FECHA DE NACIMIENTO",
-			 "tipoDato":"x",
-			 "obligatorio":"x",
-			 "valorUnico":"x",
-			 "funcion":[
+			 "attribute":"FECHA DE NACIMIENTO",
+			 "dataType":"x",
+			 "required":"x",
+			 "uniqueValue":"x",
+			 "function":[
 				"ValidarFormatoFecha"
 			 ],
-			 "origen":[
+			 "origin":[
 				"x",
 				"y",
 				"z"
 			 ],
-			 "argumento":[
+			 "argument":[
 				"01/02/2006"
 			 ],
-			 "dominio":[
+			 "domain":[
 				"x",
 				"y",
 				"z"
@@ -334,22 +333,22 @@
 		  },
 		  {
 			 "id":"13",
-			 "atributo":"SEXO",
-			 "tipoDato":"x",
-			 "obligatorio":"x",
-			 "valorUnico":"x",
-			 "funcion":[
+			 "attribute":"SEXO",
+			 "dataType":"x",
+			 "required":"x",
+			 "uniqueValue":"x",
+			 "function":[
 				"ValoresPosibles"
 			 ],
-			 "origen":[
+			 "origin":[
 				"x",
 				"y",
 				"z"
 			 ],
-			 "argumento":[
+			 "argument":[
 				"1,2"
 			 ],
-			 "dominio":[
+			 "domain":[
 				"x",
 				"y",
 				"z"
@@ -357,22 +356,22 @@
 		  },
 		  {
 			 "id":"14",
-			 "atributo":"SALDO DEUDOR",
-			 "tipoDato":"x",
-			 "obligatorio":"x",
-			 "valorUnico":"x",
-			 "funcion":[
+			 "attribute":"SALDO DEUDOR",
+			 "dataType":"x",
+			 "required":"x",
+			 "uniqueValue":"x",
+			 "function":[
 				"ValidarNumero"
 			 ],
-			 "origen":[
+			 "origin":[
 				"x",
 				"y",
 				"z"
 			 ],
-			 "argumento":[
+			 "argument":[
 				""
 			 ],
-			 "dominio":[
+			 "domain":[
 				"x",
 				"y",
 				"z"
@@ -380,22 +379,22 @@
 		  },
 		  {
 			 "id":"15",
-			 "atributo":"DIAS",
-			 "tipoDato":"x",
-			 "obligatorio":"x",
-			 "valorUnico":"x",
-			 "funcion":[
+			 "attribute":"DIAS",
+			 "dataType":"x",
+			 "required":"x",
+			 "uniqueValue":"x",
+			 "function":[
 				"ValidarNumero"
 			 ],
-			 "origen":[
+			 "origin":[
 				"x",
 				"y",
 				"z"
 			 ],
-			 "argumento":[
+			 "argument":[
 				""
 			 ],
-			 "dominio":[
+			 "domain":[
 				"x",
 				"y",
 				"z"
@@ -403,22 +402,22 @@
 		  },
 		  {
 			 "id":"16",
-			 "atributo":"FECHA DE FIN DE VIGENCIA",
-			 "tipoDato":"x",
-			 "obligatorio":"x",
-			 "valorUnico":"x",
-			 "funcion":[
+			 "attribute":"FECHA DE FIN DE VIGENCIA",
+			 "dataType":"x",
+			 "required":"x",
+			 "uniqueValue":"x",
+			 "function":[
 				"ValidarFormatoFecha"
 			 ],
-			 "origen":[
+			 "origin":[
 				"x",
 				"y",
 				"z"
 			 ],
-			 "argumento":[
+			 "argument":[
 				"01/02/2006"
 			 ],
-			 "dominio":[
+			 "domain":[
 				"x",
 				"y",
 				"z"
@@ -426,22 +425,22 @@
 		  },
 		  {
 			 "id":"17",
-			 "atributo":"MONEDA",
-			 "tipoDato":"x",
-			 "obligatorio":"x",
-			 "valorUnico":"x",
-			 "funcion":[
+			 "attribute":"MONEDA",
+			 "dataType":"x",
+			 "required":"x",
+			 "uniqueValue":"x",
+			 "function":[
 				"ValoresPosibles"
 			 ],
-			 "origen":[
+			 "origin":[
 				"x",
 				"y",
 				"z"
 			 ],
-			 "argumento":[
+			 "argument":[
 				"SOLES,DOLARES"
 			 ],
-			 "dominio":[
+			 "domain":[
 				"x",
 				"y",
 				"z"
@@ -449,24 +448,24 @@
 		  },
 		  {
 			 "id":"18",
-			 "atributo":"ESTADO CIVIL",
-			 "tipoDato":"x",
-			 "obligatorio":"x",
-			 "valorUnico":"x",
-			 "funcion":[
+			 "attribute":"ESTADO CIVIL",
+			 "dataType":"x",
+			 "required":"x",
+			 "uniqueValue":"x",
+			 "function":[
 				"ValoresPosibles",
 				"ValidarNumero"
 			 ],
-			 "origen":[
+			 "origin":[
 				"x",
 				"y",
 				"z"
 			 ],
-			 "argumento":[
+			 "argument":[
 				"2,6",
 				""
 			 ],
-			 "dominio":[
+			 "domain":[
 				"x",
 				"y",
 				"z"
@@ -474,24 +473,24 @@
 		  },
 		  {
 			 "id":"19",
-			 "atributo":"TITULO",
-			 "tipoDato":"x",
-			 "obligatorio":"x",
-			 "valorUnico":"x",
-			 "funcion":[
+			 "attribute":"TITULO",
+			 "dataType":"x",
+			 "required":"x",
+			 "uniqueValue":"x",
+			 "function":[
 				"ValidarNumero",
 				"ValoresPosibles"
 			 ],
-			 "origen":[
+			 "origin":[
 				"x",
 				"y",
 				"z"
 			 ],
-			 "argumento":[
+			 "argument":[
 				"",
 				"1,2"
 			 ],
-			 "dominio":[
+			 "domain":[
 				"x",
 				"y",
 				"z"
@@ -499,22 +498,22 @@
 		  },
 		  {
 			 "id":"20",
-			 "atributo":"NPRIME",
-			 "tipoDato":"x",
-			 "obligatorio":"x",
-			 "valorUnico":"x",
-			 "funcion":[
+			 "attribute":"NPRIME",
+			 "dataType":"x",
+			 "required":"x",
+			 "uniqueValue":"x",
+			 "function":[
 				"ValidarNumero"
 			 ],
-			 "origen":[
+			 "origin":[
 				"x",
 				"y",
 				"z"
 			 ],
-			 "argumento":[
+			 "argument":[
 				""
 			 ],
-			 "dominio":[
+			 "domain":[
 				"x",
 				"y",
 				"z"
@@ -522,22 +521,22 @@
 		  },
 		  {
 			 "id":"21",
-			 "atributo":"DSTARTDATE",
-			 "tipoDato":"x",
-			 "obligatorio":"x",
-			 "valorUnico":"x",
-			 "funcion":[
+			 "attribute":"DSTARTDATE",
+			 "dataType":"x",
+			 "required":"x",
+			 "uniqueValue":"x",
+			 "function":[
 				"ValidarFormatoFecha"
 			 ],
-			 "origen":[
+			 "origin":[
 				"x",
 				"y",
 				"z"
 			 ],
-			 "argumento":[
+			 "argument":[
 				"20060201"
 			 ],
-			 "dominio":[
+			 "domain":[
 				"x",
 				"y",
 				"z"
@@ -545,106 +544,68 @@
 		  },
 		  {
 			 "id":"22",
-			 "atributo":"DEXPIRDAT",
-			 "tipoDato":"x",
-			 "obligatorio":"x",
-			 "valorUnico":"x",
-			 "funcion":[
+			 "attribute":"DEXPIRDAT",
+			 "dataType":"x",
+			 "required":"x",
+			 "uniqueValue":"x",
+			 "function":[
 				"ValidarFormatoFecha"
 			 ],
-			 "origen":[
+			 "origin":[
 				"x",
 				"y",
 				"z"
 			 ],
-			 "argumento":[
+			 "argument":[
 				"20060201"
 			 ],
-			 "dominio":[
+			 "domain":[
 				"x",
 				"y",
 				"z"
 			 ]
 		  }
 	   ],
-	   "registrar":{
-		  "cliente":[
-			 {
-				"atributo":"attr1",
-				"origen":"trama",
-				"valor":"poliza"
-			 }
-		  ],
-		  "certificado":[
-			 {
-				"atributo":"attr1",
-				"origen":"trama",
-				"valor":"poliza"
-			 }
-		  ],
-		  "rol":[
-			 {
-				"atributo":"attr1",
-				"origen":"trama",
-				"valor":"poliza"
-			 }
-		  ],
-		  "poliza":[
-			 {
-				"atributo":"attr1",
-				"origen":"trama",
-				"valor":"poliza"
-			 }
-		  ],
-		  "credito":[
-			 {
-				"atributo":"attr1",
-				"origen":"trama",
-				"valor":"poliza"
-			 }
-		  ]
-	   },
-	   "notificaciones":[
-		  {
-			 "id":"1",
-			 "evento":"x",
-			 "aplicacion":"x",
-			 "asunto":"x",
-			 "plantilla":"x",
-			 "fase":"Lectura"
-		  },
-		  {
-			 "id":"2",
-			 "evento":"x",
-			 "aplicacion":"x",
-			 "asunto":"x",
-			 "plantilla":"x",
-			 "fase":"Lectura"
-		  },
-		  {
-			 "id":"1",
-			 "evento":"x",
-			 "aplicacion":"x",
-			 "asunto":"x",
-			 "plantilla":"x",
-			 "fase":"Validar"
-		  },
-		  {
-			 "id":"1",
-			 "evento":"x",
-			 "aplicacion":"x",
-			 "asunto":"x",
-			 "plantilla":"x",
-			 "fase":"Registrar"
-		  },
-		  {
-			 "id":"1",
-			 "evento":"x",
-			 "aplicacion":"x",
-			 "asunto":"x",
-			 "plantilla":"x",
-			 "fase":"Migrar"
-		  }
-	   ]
-	}
- }
+    "client": [
+      {
+        "attribute": "attr1",
+        "description": "x",
+        "origin": "trama",
+        "value": "poliza"
+      }
+    ],
+    "certificate": [
+      {
+        "attribute": "attr1",
+        "description": "x",
+        "origin": "trama",
+        "value": "poliza"
+      }
+    ],
+    "role": [
+      {
+        "attribute": "attr1",
+        "description": "x",
+        "origin": "trama",
+        "value": "poliza"
+      }
+    ],
+    "policy": [
+      {
+        "attribute": "attr1",
+        "description": "x",
+        "origin": "trama",
+        "value": "poliza"
+      }
+    ],
+    "credit": [
+      {
+        "attribute": "attr1",
+        "description": "x",
+        "origin": "trama",
+        "value": "poliza"
+      }
+    ],
+    "structureId": 4
+  }
+}

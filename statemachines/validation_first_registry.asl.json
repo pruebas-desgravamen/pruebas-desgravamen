@@ -42,7 +42,7 @@
       "Type": "Choice",
       "Choices": [
         {
-          "And": [
+          "Or": [
               {
                   "Variable": "$.taskresult.Errors",
                   "IsNull": true
@@ -61,16 +61,15 @@
       "Type": "Task",
       "Parameters": {
         "filename.$": "$.Filename",
-        "pk.$": "$.pkstructure.Items[0].pk.S"
+        "pk.$": "$.pkstructure.Items[0].pk.S",
+        "structure.$": "$.pkstructure.Items[0].structure.S"
       },
       "Resource": "${GagaFunctionArn}",
-      "Next": "Update Dynamo Process"
+      "End": true
     },
     "Not Update Process":{
       "Type": "Pass",
       "End": true
     }
-
-    
   }
 }

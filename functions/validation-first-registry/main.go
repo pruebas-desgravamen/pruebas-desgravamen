@@ -50,7 +50,7 @@ type QueryConfiguradorResponse struct {
 	Argumento []string `json:"argumento"`
 }
 
-type IdConfiguradorNPoliza struct {
+type IdConfiguradorNPolicy struct {
 	Sk string `json:"sk"`
 }
 
@@ -326,6 +326,19 @@ func ValidarNumero(valor string, campo string) (bool, error) {
 }
 
 func ValidarFormatoFecha(fecha string, formato string, campo string) (bool, error) {
+	if len(strings.Split(fecha, "/")) == 1 || len(strings.Split(fecha, "-")) == 1 || len(strings.Split(fecha, ".")) == 1 {
+		yearFecha := fecha[0:4]
+		monthFecha := fecha[4:6]
+		dayFecha := fecha[6:8]
+		fecha = dayFecha + "/" + monthFecha + "/" + yearFecha
+	}
+
+	if len(strings.Split(formato, "/")) == 1 || len(strings.Split(formato, "-")) == 1 || len(strings.Split(formato, ".")) == 1 {
+		yearFormato := formato[0:4]
+		monthFormato := formato[4:6]
+		dayFormato := formato[6:8]
+		formato = dayFormato + "/" + monthFormato + "/" + yearFormato
+	}
 	_, err := time.Parse(formato, fecha)
 	if err != nil {
 		return false, fmt.Errorf("fecha %s del campo %s no cumple con el formato %s", fecha, campo, formato)
@@ -333,7 +346,6 @@ func ValidarFormatoFecha(fecha string, formato string, campo string) (bool, erro
 	return true, nil
 }
 
-type ValidationReturn interface{}
 type FuncError struct {
 	Transaccion string
 	Registro    int    `json:"registro"`

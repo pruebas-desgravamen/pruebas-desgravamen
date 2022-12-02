@@ -50,7 +50,7 @@ Resources:
                 Action:
                 - lambda:invokeFunction
                 Resource: 
-                  - !GetAtt SaveStructureFunction.Arn
+                  - !GetAtt StoreStructureFunction.Arn
                   - !GetAtt ReadFilenameFunction.Arn
 
   AppSyncApi:
@@ -92,6 +92,19 @@ Resources:
         TableName: !Ref DBProcesses
         AwsRegion: !Sub ${AWS::Region}
 
+  # AppSync Data Source for DynamoDB - DBProcesses
+  DBConfiguradorDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      Name: DBConfigurador
+      ApiId: !GetAtt AppSyncApi.ApiId
+      Description: "The Single Table AppSync Data Source"
+      Type: AMAZON_DYNAMODB
+      ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
+      DynamoDBConfig:
+        TableName: !Ref DBConfigurador
+        AwsRegion: !Sub ${AWS::Region}
+
    # AppSync Data Source for StepFunction
   StepFunctionsHttpDataSource:
     Type: AWS::AppSync::DataSource
@@ -109,15 +122,15 @@ Resources:
             SigningRegion: !Ref AWS::Region
             SigningServiceName: states
 
-  SaveStructureDataSource:
+  StoreStructureDataSource:
     Type: "AWS::AppSync::DataSource"
     Properties:
       ApiId: !GetAtt AppSyncApi.ApiId
-      Name: SaveStructure
+      Name: storeStructureDataSource
       Type: AWS_LAMBDA
       ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
       LambdaConfig:
-        LambdaFunctionArn: !GetAtt SaveStructureFunction.Arn
+        LambdaFunctionArn: !GetAtt StoreStructureFunction.Arn
   
  ###############      
  ## RESOLVERS ##
@@ -150,8 +163,8 @@ Resources:
         {
           "processes": [
             #foreach($item in $ctx.result.items) {
-              "idProcess": $util.toJson($item['idProcess']),
-              "Ttransaction": $util.toJson($item['Ttransaction']),
+              "idProcess": $util.toJson($item['pk']),
+              "transaction": $util.toJson($item['transaction']),
               "contractor": $util.toJson($item['contractor']),
               "policy": $util.toJson($item['policy']),
               "product": $util.toJson($item['product']),
@@ -196,13 +209,13 @@ Resources:
         }
       ResponseMappingTemplate: $util.parseJson($ctx.result.body).output
 
-  SaveStructureResolver:
+  StoreStructureResolver:
     Type: AWS::AppSync::Resolver
     Properties:
       ApiId: !GetAtt AppSyncApi.ApiId
       TypeName: Mutation
-      FieldName: saveStructure
-      DataSourceName: !GetAtt SaveStructureDataSource.Name
+      FieldName: storeStructure
+      DataSourceName: !GetAtt StoreStructureDataSource.Name
       RequestMappingTemplate: !Sub >
         {
           "version": "2017-02-28",
@@ -213,6 +226,114 @@ Resources:
         }
       ResponseMappingTemplate: $util.toJson($context.result)
 
+  # OKAY: true
+  GetStructurePolicy:
+    Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Query
+      FieldName: getStructurePolicy
+      DataSourceName: !GetAtt DBConfiguradorDataSource.Name
+      RequestMappingTemplate: >
+        {
+          "version": "2017-02-28",
+          "operation": "Query",
+          "index": "DataObject-nPolicy",
+          "query": {
+            "expression": "DataObject = :DataObject AND nPolicy = :nPolicy",
+            "expressionValues":	{              
+        	    ":DataObject" : $util.dynamodb.toDynamoDBJson("policy"),
+        	    ":nPolicy" : $util.dynamodb.toDynamoDBJson($ctx.args.policy)
+            }
+          },
+          "limit" : 10
+        }
+      ResponseMappingTemplate: > 
+        {
+          "storeProcessPolicyInformation": [
+            #foreach($item in $ctx.result.items) {
+              "contractor": $util.toJson($item['contractor']),
+              "product": $util.toJson($item['product']),
+              "salesChannel": $util.toJson($item['salesChannel']),
+              "structureName": $util.toJson($item['structureName'])
+            }#if($foreach.hasNext),#end
+            #end
+          ]
+        }
+
+  # OKAY: true
+  GetStructureRuc:
+    Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Query
+      FieldName: getStructureRuc
+      DataSourceName: !GetAtt DBConfiguradorDataSource.Name
+      RequestMappingTemplate: >
+        {
+          "version": "2017-02-28",
+          "operation": "Query",
+          "index": "ruc-sk",
+          "query": {
+            "expression": "ruc = :ruc AND begins_with(sk, :sk)",
+            "expressionValues":	{              
+        	    ":ruc" : $util.dynamodb.toDynamoDBJson($ctx.args.ruc),
+        	    ":sk" : $util.dynamodb.toDynamoDBJson("POL-")
+            }
+          }
+        }
+      ResponseMappingTemplate: > 
+        {
+          "storeProcessPolicyInformation": [
+            #foreach($item in $ctx.result.items) {
+              "contractor": $util.toJson($item['contractor']),
+              "product": $util.toJson($item['product']),
+              "salesChannel": $util.toJson($item['salesChannel']),
+              "nPolicy": $util.toJson($item['nPolicy']),
+              "structureName": $util.toJson($item['structureName'])
+            }#if($foreach.hasNext),#end
+            #end
+          ]
+        }
+
+  # OKAY: true
+  GetStructureContractor:
+    Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Query
+      FieldName: getStructureContractor
+      DataSourceName: !GetAtt DBConfiguradorDataSource.Name
+      RequestMappingTemplate: >
+        {
+          "version": "2017-02-28",
+          "operation": "Query",
+          "index": "contractor-sk",
+          "query": {
+            "expression": "contractor = :contractor AND begins_with(sk, :sk)",
+            "expressionValues":	{              
+        	    ":ruc" : $util.dynamodb.toDynamoDBJson($ctx.args.contractor),
+        	    ":sk" : $util.dynamodb.toDynamoDBJson("POL-")
+            }
+          }
+        }
+      ResponseMappingTemplate: > 
+        {
+          "storeProcessPolicyInformation": [
+            #foreach($item in $ctx.result.items) {
+              "ruc": $util.toJson($item['ruc']),
+              "product": $util.toJson($item['product']),
+              "salesChannel": $util.toJson($item['salesChannel']),
+              "nPolicy": $util.toJson($item['nPolicy']),
+              "structureName": $util.toJson($item['structureName'])
+            }#if($foreach.hasNext),#end
+            #end
+          ]
+        }
+        
  ###################      
  ## STATEMACHINES ##
  ###################
@@ -444,7 +565,15 @@ Resources:
           AttributeType: S
         - AttributeName: sk
           AttributeType: S
-        - AttributeName: nPoliza
+        - AttributeName: nPolicy
+          AttributeType: S
+        - AttributeName: structureId
+          AttributeType: N
+        - AttributeName: DataObject
+          AttributeType: S
+        - AttributeName: ruc
+          AttributeType: S
+        - AttributeName: contractor
           AttributeType: S
       KeySchema:
         - AttributeName: pk
@@ -453,11 +582,43 @@ Resources:
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
       GlobalSecondaryIndexes:
-      - IndexName: pk-nPoliza
+      - IndexName: pk-nPolicy
         KeySchema:
           - AttributeName: pk
             KeyType: HASH
-          - AttributeName: nPoliza
+          - AttributeName: nPolicy
+            KeyType: RANGE
+        Projection:
+          ProjectionType: ALL ##CAMBIARRR
+      - IndexName: id-structure
+        KeySchema:
+          - AttributeName: structureId
+            KeyType: HASH
+          - AttributeName: sk
+            KeyType: RANGE
+        Projection:
+          ProjectionType: ALL ##CAMBIARRR
+      - IndexName: DataObject-nPolicy
+        KeySchema:
+          - AttributeName: DataObject
+            KeyType: HASH
+          - AttributeName: nPolicy
+            KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+      - IndexName: ruc-sk
+        KeySchema:
+          - AttributeName: ruc
+            KeyType: HASH
+          - AttributeName: sk
+            KeyType: RANGE
+        Projection:
+          ProjectionType: ALL ##CAMBIARRR
+      - IndexName: contractor-sk
+        KeySchema:
+          - AttributeName: contractor
+            KeyType: HASH
+          - AttributeName: sk
             KeyType: RANGE
         Projection:
           ProjectionType: ALL ##CAMBIARRR
@@ -506,7 +667,7 @@ Resources:
   #               - aws.s3 
 
   # GUARDAR CONFIGURACION
-  SaveStructureFunction:
+  StoreStructureFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: ./functions/configurador/put

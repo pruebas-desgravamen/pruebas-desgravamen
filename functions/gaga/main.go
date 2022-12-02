@@ -12,9 +12,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
+type Atributo struct {
+	Atributo string `json:"atributo"`
+}
 type Iobject struct {
 	Key       string `json:"key"`
 	Etag      string `json:"etag"`
@@ -22,9 +26,10 @@ type Iobject struct {
 }
 
 type Evento struct {
-	Object   Iobject `json:"object"`
-	Pk       string  `json:"pk"`
-	Filename string  `json:"filename"`
+	Object    Iobject `json:"object"`
+	Pk        string  `json:"pk"`
+	Filename  string  `json:"filename"`
+	Structure string  `json:"structure"`
 }
 
 type Response struct {
@@ -48,7 +53,28 @@ func Handler(ctx context.Context, ev Evento) (Response, error) {
 	// 	return "", err
 	// }
 	svcDynamo := dynamodb.New(sess) // Dynamodb
-	svcS3 := s3.New(sess)           // s3
+
+	inputQueryConfigurador := dynamodb.QueryInput{
+		TableName:              aws.String(TABLE_NAME_CONFIGURADOR),
+		KeyConditionExpression: aws.String("pk=:pk"),
+		ExpressionAttributeNames: map[string]*string{
+			"#atributo": aws.String("atributo"),
+		},
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":pk": {S: aws.String(ev.Structure)},
+		},
+		ProjectionExpression: aws.String("#atributo"),
+	}
+
+	queryConfigurador, _ := svcDynamo.Query(&inputQueryConfigurador)
+
+	queryResponse := []Atributo{}
+	_ = dynamodbattribute.UnmarshalListOfMaps(queryConfigurador.Items, &queryResponse)
+
+	fmt.Println("queryResponse")
+	fmt.Println(queryResponse)
+
+	svcS3 := s3.New(sess) // s3
 
 	file, _ := svcS3.GetObject(
 		&s3.GetObjectInput{
@@ -56,20 +82,14 @@ func Handler(ctx context.Context, ev Evento) (Response, error) {
 			Key:    aws.String(OBJECT_NAME),
 		})
 
-	// if err != nil {
-	// 	fmt.Println(err.Error())
-	// 	return "could not retrieve document", err
-	// }
-
 	result, _ := OpenFile(*file)
 
 	rows := result.GetRows("Sheet1")
-	columnas := result.GetRows("Sheet1")[0]
 
 	mapFirstRows := make(map[string]int)
 
-	for i, firstRow := range columnas {
-		mapFirstRows[firstRow] = i
+	for i, firstRow := range queryResponse {
+		mapFirstRows[firstRow.Atributo] = i
 	}
 	fmt.Println(mapFirstRows)
 
@@ -87,12 +107,12 @@ func Handler(ctx context.Context, ev Evento) (Response, error) {
 	}
 
 	// verificar que la moneda sea la misma
-	for i := 1; i <= len((rows))-1; i++ {
-		if rows[i][18] != "SOLES" {
+	for i := 1; i <= len((rows)); i++ {
+		if rows[i][mapFirstRows["MONEDA"]] != rows[i+1][mapFirstRows["MONEDA"]] {
 			return Response{}, nil
 		}
 	}
-	moneda := rows[1][16]
+	moneda := rows[1][mapFirstRows["MONEDA"]]
 
 	response := Response{
 		Asegurados: len((rows)) - 1,
@@ -110,7 +130,7 @@ func Handler(ctx context.Context, ev Evento) (Response, error) {
 				S: aws.String("PROCESS"),
 			},
 		},
-		UpdateExpression: aws.String("set asegurados = :asegurados, premium = :premium, currency = :currency, userType = :userType, processes = :processes, apps = :apps"),
+		UpdateExpression: aws.String("set asegurados = :asegurados, premium = :premium, currency = :currency"),
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":asegurados": {
 				N: aws.String(strconv.Itoa(len((rows)) - 1)),
@@ -136,6 +156,8 @@ func Handler(ctx context.Context, ev Evento) (Response, error) {
 func main() {
 	lambda.Start(Handler)
 }
+
+// HACER QUERY A ENTIDADES PARA SABER A QUE CAMPO ENTRARIA
 
 func OpenFile(filename s3.GetObjectOutput) (*excelize.File, error) {
 

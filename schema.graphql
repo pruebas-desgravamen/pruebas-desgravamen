@@ -63,110 +63,164 @@ type AllProcessesOutput{
 
 
 #-------------- CONFIGURACION ----------------
-# input DatosGeneralesInput{
+###################################################
+#####################  INPUT  #####################
+###################################################
 
-#   nombreEstructura: String!
-#   transaccion: String!
-#   ramo: String!
-#   datosCabecera: String!
-#   certificadoPorRol: Boolean!
-#   filasOrdenadasPorRol: Boolean!
-#   formatoArchivo: String!
-#   dateFormat: String!
-# }
-
-# input Poliza{
-#   idStructure: String!
-#   nombreStructure: String!
-#   producto: String!
-#   nPoliza: String!
-#   contratante: String!
-#   canalVenta: String!
-#   vigencia: String!
-#   moneda: String!
-#   reglas: [Int]!
-# }
+input DetailsInput{
+  structureName: String!
+  transaction: String!
+  branch: String!
+  header: String!
+  certificateByRole: String!
+  rowsOrderByRole: String!
+  fileFormat: String!
+  dateFormat: String!
+}
 
 
-# input PolizaInput{
 
-#   producto: String!
-#   nPoliza: String!
-#   contratante: String!
-#   canalVenta: String!
-#   vigencia: String!
-#   moneda: String!
-#   reglas: [Int]!
-# }
+input PolicyInput{
+  product: String!
+  nPolicy: String!
+  contractor: String!
+  salesChannel: String!
+  startDate: String!
+  expirDate: String!
+  currency: String!
+  ruc: String!
+  functions: [Int]!
+}
 
-# input AtributosInput{
+input AtributeInput{
+  id: String!
+  attribute: String!
+  dataType: String!
+  required: String!
+  uniqueValue: String!
+  function: [String]!
+  origin: [String]!
+  argument: [String]!
+  domain: [String]!
+}
 
-#   id: String!
-#   atributo: String!
-#   tipoDato: String!
-#   obligatorio: String!
-#   valorUnico: String!
-#   funcion: [String]!
-#   origen: [String]!
-#   argumento: [String]!
-#   dominio: [String]!
-# }
+input EntityInput{
 
-# input NotificacionesInput{
-
-#   id: String!
-#   evento: String!
-#   aplicacion: String!
-#   asunto: String!
-#   plantilla: String!
-#   fase: String!
-# }
-
-# input EntidadInput{
-
-#   atributo: String!
-#   origen: String!
-#   valor: String!
-# }
+  attribute: String!
+  description: String!
+  origin: String!
+  value: String!
+}
 
 # input RegistrarInput{
-#   cliente: [EntidadInput]!
-#   certificado: [EntidadInput]!
-#   rol: [EntidadInput]!
-#   poliza: [EntidadInput]!
-#   credito: [EntidadInput]!
+#   client: [EntityInput]!
+#   certificate: [EntityInput]!
+#   role: [EntityInput]!
+#   policy: [EntityInput]!
+#   credit: [EntityInput]!
 # }
 
-# type Structure {
-#   datosGenerales: DatosGenerales!  # cambiar
-#   coleccionPolizas: [Poliza]! # Falta crear type
-#   lectura: [Atributos]!  # Falta crear type
-#   registrar: Registrar!  # Falta crear type
-#   notificaciones: [Notificaciones]!  # Falta crear type
-#   structureId: String!
-# }
+input StructureInput {
+  #Datos Generales
+  structureName: String!
+  transaction: String!
+  branch: String!
+  header: String!
+  certificateByRole: String!
+  rowsOrderByRole: String!
+  fileFormat: String!
+  dateFormat: String!
 
-# type DatosGenerales {
-#   nombreEstructura: String!
-#   transaccion: String!
-#   ramo: String!
-#   datosCabecera: String!
-#   certificadoPorRol: String!
-#   filasOrdenadasPorRol: String!
-#   formatoArchivo: String!
-#   creationDate: String
-#   changeDate: String
-#   state: Boolean!
-# }
+  #Coleccion de policys
+  policyCollection: [PolicyInput]
 
-# input StructureInput {
-#   datosGenerales: DatosGeneralesInput!
-#   coleccionPolizas: [PolizaInput]!
-#   lectura: [AtributosInput]!
-#   registrar: RegistrarInput!
-#   notificaciones: [NotificacionesInput]!
-#   structureId: String #id para hacer un update a una estructura
-# }
+  #Lista de attributes
+  attributes: [AtributeInput]
+
+  #Registrar configuracion de entidades
+  client: [EntityInput]!
+  certificate: [EntityInput]!
+  role: [EntityInput]!
+  policy: [EntityInput]!
+  credit: [EntityInput]!
+
+
+  #Si es update
+  structureId: Int
+}
+
+###################################################
+#####################RESPONSES#####################
+###################################################
+
+type Policy{
+  product: String!
+  nPolicy: String!
+  contractor: String!
+  salesChannel: String!
+  startDate: String!
+  expirDate: String!
+  currency: String!
+  ruc: String!
+  functions: [Int]!
+}
+
+type Atribute{
+  id: String!
+  attribute: String!
+  dataType: String!
+  required: String!
+  uniqueValue: String!
+  function: [String]!
+  origin: [String]!
+  argument: [String]!
+  domain: [String]!
+}
+
+
+type Entity{
+  attribute: String!
+  description: String!
+  origin: String!
+  value: String!
+}
+
+type Details{
+  structureName: String!
+  transaction: String!
+  branch: String!
+  header: String!
+  certificateByRole: String!
+  rowsOrderByRole: String!
+  fileFormat: String!
+  dateFormat: String!
+}
+
+type Structure {
+  #Datos Generales
+  structureName: String!
+  transaction: String!
+  branch: String!
+  header: String!
+  certificateByRole: String!
+  rowsOrderByRole: String!
+  fileFormat: String!
+  dateFormat: String!
+
+  #Coleccion de policys
+  policyCollection: [Policy]
+
+  #Lista de attributes
+  attributes: [Atribute]
+
+  #Registrar configuracion de entidades
+  client: [Entity]
+  certificate: [Entity]
+  role: [Entity]
+  policy: [Entity]
+  credit: [Entity]
+
+}
 
 type Mutation {
 
@@ -174,7 +228,7 @@ type Mutation {
   ####################ESTRUCTURAS######################
   #####################################################
   
-  # storeStructure(event: StructureInput!): Boolean #store
+  storeStructure(event: StructureInput!): Boolean #store
   # # validations(validations: InputValidations ): String
   # deleteStructure(structureId:String!):Boolean # falta eliminar una estructura
   # activeStructure(status:Boolean):Boolean # falta activar o desactivar una estructura
@@ -191,6 +245,30 @@ type Mutation {
   
 }
 
+type GetStructurePolicyOutput{
+  contractor: String
+  product: String
+  salesChannel: String
+  structureName: String
+}
+
+type GetStructureRucOutput{
+  contractor: String
+  product: String
+  salesChannel: String
+  structureName: String
+  nPolicy: [String]
+}
+
+type GetStructureContractorOutput{
+  ruc: String
+  product: String
+  salesChannel: String
+  structureName: String
+  nPolicy: [String]
+}
+
+
 type Query{
 
   #####################################################
@@ -202,7 +280,12 @@ type Query{
   #####################################################
   ###################CARGA MASIVA######################
   #####################################################
-  # getStructureCarga(xRuc:String, xPoliza: String, xContratante: String): Poliza    # falta crear, hablar con gustavo para ver tema de lectura de datos para creacion de tramas
+  # getStructureCarga(xRuc:String, xPoliza: String, xContratante: String): contratnte profucto canal de venta   ruc  # falta crear, hablar con gustavo para ver tema de lectura de datos para creacion de tramas
+  getStructurePolicy (policy: String): GetStructurePolicyOutput # GSI-3-PK
+  getStructureRuc (ruc: String): GetStructureRucOutput # GSI-3-PK
+  getStructureContractor (contractor: String): GetStructureContractorOutput # GSI-3-PK
+
+  # Done
   listProcesses(limit: Int, nextToken: String): AllProcessesOutput
   # getErrores(idProcess: String!): Errores # reporte de errores en el detalle de la estructura
 }

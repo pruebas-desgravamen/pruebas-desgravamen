@@ -1,0 +1,237 @@
+{
+  "event": {
+      "structureName": "Primera Estructura",
+      "transaction": "x",
+      "branch": "x",
+      "header": "x",
+      "certificateByRole": "x",
+      "rowsOrderByRole": "x",
+      "fileFormat": "x",
+      "dateFormat": "x",
+    "policyCollection": [
+      {
+        "product": "Producto 1",
+        "nPolicy": "1000",
+        "contractor": "x",
+        "salesChannel": "x",
+        "currency": "x",
+        "startDate": "x",
+        "expirDate": "x",
+        "ruc": "x",
+        "functions": []
+      },
+      {
+        "product": "Producto 2",
+        "nPolicy": "2000",
+        "contractor": "x",
+        "salesChannel": "x",
+        "currency": "x",
+        "startDate": "x",
+        "expirDate": "x",
+        "ruc": "x",
+        "functions": []
+      },
+      {
+        "product": "Producto 3",
+        "nPolicy": "3000",
+        "contractor": "x",
+        "salesChannel": "x",
+        "currency": "x",
+        "startDate": "x",
+        "expirDate": "x",
+        "ruc": "x",
+        "functions": []
+      },
+      {
+        "product": "Producto 4",
+        "nPolicy": "4000",
+        "contractor": "x",
+        "salesChannel": "x",
+        "currency": "x",
+        "startDate": "x",
+        "expirDate": "x",
+        "ruc": "x",
+        "functions": []
+      }
+    ],
+    "attributes": [
+      {
+        "id": "1",
+        "attribute": "NOMBRES",
+        "dataType": "x",
+        "required": "x",
+        "uniqueValue": "x",
+        "function": [
+          "ValidarNumero"
+        ],
+        "origin": [
+          "x",
+          "y",
+          "z"
+        ],
+        "argument": [
+          ""
+        ],
+        "domain": [
+          "x",
+          "y",
+          "z"
+        ]
+      },
+      {
+        "id": "2",
+        "attribute": "NRO DE DOCUMENTO DE IDENTIDAD",
+        "dataType": "y",
+        "required": "y",
+        "uniqueValue": "y",
+        "function": [
+          "ValidarNumero",
+          "ValoresPosibles"
+        ],
+        "origin": [
+          "x",
+          "y",
+          "z"
+        ],
+        "argument": [
+          "",
+          "2,3"
+        ],
+        "domain": [
+          "x",
+          "y",
+          "z"
+        ]
+      },
+      {
+        "id": "3",
+        "attribute": "SEXO",
+        "dataType": "z",
+        "required": "z",
+        "uniqueValue": "z",
+        "function": [
+          "ValidarNumero"
+        ],
+        "origin": [
+          "x",
+          "y",
+          "z"
+        ],
+        "argument": [
+          ""
+        ],
+        "domain": [
+          "x",
+          "y",
+          "z"
+        ]
+      },
+      {
+        "id": "4",
+        "attribute": "MONEDA",
+        "dataType": "w",
+        "required": "w",
+        "uniqueValue": "w",
+        "function": [
+          "ValidarNumero"
+        ],
+        "origin": [
+          "x",
+          "y",
+          "z"
+        ],
+        "argument": [
+          ""
+        ],
+        "domain": [
+          "x",
+          "y",
+          "z"
+        ]
+      }
+    ],
+    "client": [
+      {
+        "attribute": "attr1",
+        "description": "x",
+        "origin": "trama",
+        "value": "poliza"
+      }
+    ],
+    "certificate": [
+      {
+        "attribute": "attr1",
+        "description": "x",
+        "origin": "trama",
+        "value": "poliza"
+      }
+    ],
+    "role": [
+      {
+        "attribute": "attr1",
+        "description": "x",
+        "origin": "trama",
+        "value": "poliza"
+      }
+    ],
+    "policy": [
+      {
+        "attribute": "attr1",
+        "description": "x",
+        "origin": "trama",
+        "value": "poliza"
+      }
+    ],
+    "credit": [
+      {
+        "attribute": "attr1",
+        "description": "x",
+        "origin": "trama",
+        "value": "poliza"
+      }
+    ],
+    "notifications": [
+      {
+        "id": "2",
+        "event": "x",
+        "aplication": "x",
+        "subject": "x",
+        "template": "x",
+        "fase": "Lectura"
+      },
+      {
+        "id": "2",
+        "event": "x",
+        "aplication": "x",
+        "subject": "x",
+        "template": "x",
+        "fase": "Lectura"
+      },
+      {
+        "id": "2",
+        "event": "x",
+        "aplication": "x",
+        "subject": "x",
+        "template": "x",
+        "fase": "Validar"
+      },
+      {
+        "id": "2",
+        "event": "x",
+        "aplication": "x",
+        "subject": "x",
+        "template": "x",
+        "fase": "Registrar"
+      },
+      {
+        "id": "2",
+        "event": "x",
+        "aplication": "x",
+        "subject": "x",
+        "template": "x",
+        "fase": "Migrar"
+      }
+    ],
+    "structureId": 3
+  }
+}

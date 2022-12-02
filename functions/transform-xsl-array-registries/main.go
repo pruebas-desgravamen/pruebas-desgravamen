@@ -1,325 +1,368 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 
-	"github.com/360EntSecGroup-Skylar/excelize"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-type FuncionArgumento struct {
-	Atributo  string
-	Funcion   []string
-	Argumento [][]string
+type Details struct {
+	Pk                string `json:"pk"`
+	Sk                string `json:"sk"`
+	StructureName     string `json:"structureName"`
+	Transaction       string `json:"transaction"`
+	Branch            string `json:"branch"`
+	Header            string `json:"header"`
+	CertificateByRole string `json:"certificateByRole"`
+	RowsOrderByRole   string `json:"rowsOrderByRole"`
+	FileFormat        string `json:"fileFormat"`
+	DateFormat        string `json:"dateFormat"`
+	DataObject        string `default:"details"`
 }
 
-type AtributoFuncionArgumento struct {
-	Atributo          string           `json:"atributo"`
-	FuncionArgumentos FuncionArgumento `json:"funcion"`
-}
-type RegistroAtributoValor struct {
-	Registro int
-	Atributo string `json:"atributo"`
-	Valor    string `json:"valor"`
-}
-
-type RegistroAtributoValorFuncionArgumento struct {
-	Registro   int        `json:"registro"`
-	Atributo   string     `json:"atributo"`
-	Valor      string     `json:"valor"`
-	Funcion    []string   `json:"funcion"`
-	Argumentos [][]string `json:"argumentos"`
+type Policy struct {
+	Pk           string `json:"pk"`
+	Sk           string `json:"sk"`
+	Product      string `json:"product"`
+	NPolicy      string `json:"nPolicy"`
+	Contractor   string `json:"contractor"`
+	SalesChannel string `json:"salesChannel"`
+	StartDate    string `json:"startDate"`
+	ExpirDate    string `json:"expirDate"`
+	Currency     string `json:"currency"`
+	Ruc          string `json:"ruc"`
+	Functions    []int  `json:"functions"`
+	DataObject   string `default:"policy"`
 }
 
-type QueryConfiguradorResponse struct {
-	Atributo  string   `json:"atributo"`
-	Funcion   []string `json:"funcion"`
-	Argumento []string `json:"argumento"`
+type Atribute struct {
+	Pk          string   `json:"pk"`
+	Sk          string   `json:"sk"`
+	Id          string   `json:"id"`
+	Attribute   string   `json:"attribute"`
+	DataType    string   `json:"dataType"`
+	Required    string   `json:"required"`
+	UniqueValue string   `json:"uniqueValue"`
+	Function    []string `json:"function"`
+	Origin      []string `json:"origin"`
+	Argument    []string `json:"argument"`
+	Domain      []string `json:"domain"`
+	DataObject  string   `default:"attribute"`
 }
 
-type Cliente struct {
-	PK     string `json:"pk"`
-	Sk     string `json:"sk"`
-	TIdDoc string `json:"tIdDoc"`
-	NIdDoc string `json:"nIdDoc"`
-	Name   string `json:"name"`
+type Notification struct {
+	Pk         string `json:"pk"`
+	Sk         string `json:"sk"`
+	Id         string `json:"id"`
+	Event      string `json:"event"`
+	Aplication string `json:"aplication"`
+	Subject    string `json:"subject"`
+	Template   string `json:"template"`
+	Fase       string `json:"fase"`
+	DataObject string `default:"notifications"`
 }
 
-type Credito struct {
-	PK       string `json:"pk"`
-	Sk       string `json:"sk"`
-	Currency string `json:"currency"`
+type Entity struct {
+	Pk          string `json:"pk"`
+	Sk          string `json:"sk"`
+	Attribute   string `json:"attribute"`
+	Description string `json:"description"`
+	Origin      string `json:"origin"`
+	Value       string `json:"value"`
+	DataObject  string `default:"entity"`
 }
 
-type Certificado struct {
-	PK    string `json:"pk"`
-	Sk    string `json:"sk"`
-	Prime string `json:"Prime"`
+type Configuration struct {
+	StructureName      string         `json:"structureName"`
+	Transaction        string         `json:"transaction"`
+	Branch             string         `json:"branch"`
+	Header             string         `json:"header"`
+	CertificateByRole  string         `json:"certificateByRole"`
+	RowsOrderByRole    string         `json:"rowsOrderByRole"`
+	FileFormat         string         `json:"fileFormat"`
+	DateFormat         string         `json:"dateFormat"`
+	CollectionPolicies []Policy       `json:"policyCollection"`
+	Attributes         []Atribute     `json:"attributes"`
+	Client             []Entity       `json:"client"`
+	Certificate        []Entity       `json:"certificate"`
+	Role               []Entity       `json:"role"`
+	Policy             []Entity       `json:"policy"`
+	Credit             []Entity       `json:"credit"`
+	Notification       []Notification `json:"notifications"`
+	StructureId        int            `json:"structureId"`
 }
 
-type Iobject struct {
-	Key       string `json:"key"`
-	Etag      string `json:"etag"`
-	Sequencer string `json:"sequencer"`
+type ConfigEvent struct {
+	Event Configuration `json:"event"`
 }
 
-type IdConfiguradorNPoliza struct {
-	Sk string `json:"sk"`
+type Numerator struct {
+	Ide int `json:"ide"`
 }
 
-type Evento struct {
-	Object Iobject `json:"object"`
-}
+func handler(ctx context.Context, config ConfigEvent) (bool, error) {
+	e := config.Event
+	TABLENAME := os.Getenv("TableName")
+	REGION := os.Getenv("Region")
 
-func handler(ctx context.Context, ev Evento) ([][]RegistroAtributoValorFuncionArgumento, error) {
-
-	var BUCKET_NAME = os.Getenv("BUCKET_NAME")
-	var OBJECT_NAME = ev.Object.Key
-	var TABLE_NAME_CONFIGURADOR = os.Getenv("TABLA_NAME_CONFIGURADOR")
-
-	//Iniciar sesion en aws
-	sess, _ := session.NewSession(&aws.Config{
-		Region: aws.String(os.Getenv("us-east-1"))},
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String(REGION)},
 	)
-	// if err != nil {
-	// 	fmt.Println(err.Error())
-	// 	return _, err
-	// }
 
-	svcDynamo := dynamodb.New(sess) // Dynamodb
-	svcS3 := s3.New(sess)           // s3
-
-	// Retrieve file from S3 using EventBridge
-	file, _ := svcS3.GetObject(
-		&s3.GetObjectInput{
-			Bucket: aws.String(BUCKET_NAME),
-			Key:    aws.String(OBJECT_NAME),
-		})
-	// if err != nil {
-	// 	fmt.Println(err.Error())
-	// 	return "could not retrieve document", err
-	// }
-
-	// Open XSLX file
-	result, _ := OpenFile(*file)
-
-	// Get data from File Name
-	transaccion := OBJECT_NAME[0:2]
-	fmt.Println(transaccion)
-	if transaccion == "VE" {
-		transaccion = "VENTA"
+	if err != nil {
+		panic(fmt.Sprintf("failed to create session, %v", err))
 	}
 
-	nPolicy := OBJECT_NAME[2:17]
-	nPolicyInt, _ := strconv.Atoi(nPolicy)
-	nPolicy = strconv.Itoa(nPolicyInt)
-	fmt.Println(nPolicy)
-	// Query to know id estructura
+	svc := dynamodb.New(sess)
 
-	queryInput := dynamodb.QueryInput{
-		TableName:              aws.String(TABLE_NAME_CONFIGURADOR),
-		IndexName:              aws.String("pk-nPoliza"),
-		KeyConditionExpression: aws.String("pk= :pk and nPoliza= :nPoliza"),
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":pk":      {S: aws.String("POLIZA")},
-			":nPoliza": {S: aws.String(nPolicy)},
-		},
-		ProjectionExpression: aws.String("sk"),
-	}
-	queryIdConfigurador, _ := svcDynamo.Query(&queryInput)
+	var policyCollectionItem map[string]*dynamodb.AttributeValue
+	var attributesItem map[string]*dynamodb.AttributeValue
+	var registerClientItem map[string]*dynamodb.AttributeValue
+	var registerCertificateItem map[string]*dynamodb.AttributeValue
+	var registerRoleItem map[string]*dynamodb.AttributeValue
+	var registerPolicyItem map[string]*dynamodb.AttributeValue
+	var registerCreditItem map[string]*dynamodb.AttributeValue
 
-	idConfiguradorNPoliza := []IdConfiguradorNPoliza{}
-	_ = dynamodbattribute.UnmarshalListOfMaps(queryIdConfigurador.Items, &idConfiguradorNPoliza)
+	var batchItems []*dynamodb.WriteRequest
 
-	structureId := strings.Split(idConfiguradorNPoliza[0].Sk, "#")[0]
-
-	// if err != nil {
-	// 	fmt.Println("Unmarshall Error")
-	// 	// return "error on unmarshall", err
-	// 	return Output{}, err
-	// }
-
-	fmt.Println(structureId)
-
-	// Save the name of the columns
-	columnas := result.GetRows("Sheet1")[0]
-
-	mapFirstRows := make(map[int]string)
-
-	for i, firstRow := range columnas {
-		mapFirstRows[i] = firstRow
-	}
-	fmt.Println(mapFirstRows)
-
-	// Query to know the functions that will be applied to their respective columns (ATRIBUTO - FUNCION)
-	inputQueryConfigurador := dynamodb.QueryInput{
-		TableName:              aws.String(TABLE_NAME_CONFIGURADOR),
-		KeyConditionExpression: aws.String("pk=:pk"),
-		ExpressionAttributeNames: map[string]*string{
-			"#atributo":  aws.String("atributo"),
-			"#funcion":   aws.String("funcion"),
-			"#argumento": aws.String("argumento"),
-		},
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":pk": {S: aws.String(structureId)},
-		},
-		ProjectionExpression: aws.String("#funcion, #atributo, #argumento"),
-	}
-
-	queryConfigurador, _ := svcDynamo.Query(&inputQueryConfigurador)
-	// if err != nil {
-	// 	fmt.Println(err.Error())
-	// 	return "could not get from configurador", err
-	// }
-
-	queryResponse := []QueryConfiguradorResponse{}
-	_ = dynamodbattribute.UnmarshalListOfMaps(queryConfigurador.Items, &queryResponse)
-	// if err != nil {
-	// 	fmt.Println("Unmarshall Error")
-	// 	return "error on unmarshall", err
-	// }
-	fmt.Println("queryResponse")
-	fmt.Println(queryResponse)
-
-	// validacion de cantidad de columnas
-	// if len(columnas) == len(queryResponse) {
-	// 	return "Error en la cantidad de columnas de la trama con la del configurador", nil
-	// }
-
-	for columnaContador := 0; columnaContador < len(queryResponse); columnaContador++ {
-		if columnas[columnaContador] == queryResponse[columnaContador].Atributo {
-			fmt.Println(columnas[columnaContador])
-			fmt.Println("okay: true")
-		} else {
-			fmt.Println("error")
-		}
-	}
-
-	// for _, queryResponseElement := range queryResponse {
-	// 	if contains(columnas, queryResponseElement.Atributo) {
-	// 		fmt.Println("works")
-	// 		fmt.Println(queryResponseElement.Atributo)
-	// 	} else {
-	// 		fmt.Println("error")
-	// 	}
-
-	// 	// if queryResponseElement.Atributo in columnas{
-
-	// 	// }
-	// 	// if val, ok := mapAtributoFuncion[atributoValorList[valorFuncionListContador].Atributo]; ok {
-	// 	// 		element := ValorFuncion{
-	// 	// 			Valor:   atributoValorList[valorFuncionListContador].Valor,
-	// 	// 			Funcion: val,
-	// 	// 		}
-	// 	// 		valorFuncionList = append(valorFuncionList, element)
-	// 	// 	}
-	// }
-
-	////////////////////////////// SE PUEDE JUNTAR //////////////////////////////////////////////////////////
-	// Guardar en un array cada atributo con su array de funciones
-	atributoFuncionArray := []AtributoFuncionArgumento{}
-
-	for atributoFuncionContador := range queryResponse {
-		var argumentoMatrix [][]string
-		var argumentoArray []string
-
-		for argumento := range queryResponse[atributoFuncionContador].Argumento {
-			argumentoArray = strings.Split(queryResponse[atributoFuncionContador].Argumento[argumento], ",")
-			argumentoMatrix = append(argumentoMatrix, argumentoArray)
-		}
-
-		atributoFuncionElement := AtributoFuncionArgumento{
-			Atributo: queryResponse[atributoFuncionContador].Atributo,
-			FuncionArgumentos: FuncionArgumento{
-				Atributo:  queryResponse[atributoFuncionContador].Atributo,
-				Funcion:   queryResponse[atributoFuncionContador].Funcion,
-				Argumento: argumentoMatrix,
+	item, _ := svc.GetItem(&dynamodb.GetItemInput{
+		TableName: aws.String(TABLENAME),
+		Key: map[string]*dynamodb.AttributeValue{
+			"pk": {
+				S: aws.String("NUMERATOR"),
 			},
+			"sk": {
+				S: aws.String("NUMERATOR"),
+			},
+		},
+	})
+
+	cont := Numerator{}
+	err = dynamodbattribute.UnmarshalMap(item.Item, &cont)
+
+	if err != nil {
+		panic(fmt.Sprintf("failed to unmarshal Dynamodb Record, %v", err))
+	}
+
+	nextIde := cont.Ide + 1
+
+	details := Details{
+		Pk:                "STR-" + strconv.Itoa(nextIde),
+		Sk:                "DETAIL",
+		StructureName:     e.StructureName,
+		Transaction:       e.Transaction,
+		Branch:            e.Branch,
+		Header:            e.Header,
+		CertificateByRole: e.CertificateByRole,
+		RowsOrderByRole:   e.RowsOrderByRole,
+		FileFormat:        e.FileFormat,
+		DateFormat:        e.DateFormat,
+		DataObject:        "details",
+	}
+
+	detailsItem, err := MarshalMap(details)
+
+	batchItems = append(batchItems, &dynamodb.WriteRequest{
+		PutRequest: &dynamodb.PutRequest{
+			Item: detailsItem,
+		},
+	})
+
+	for i := 0; i < len(e.CollectionPolicies); i++ {
+		e.CollectionPolicies[i].Pk = "STR-" + strconv.Itoa(nextIde)
+		e.CollectionPolicies[i].Sk = "POL-" + e.CollectionPolicies[i].NPolicy
+		e.CollectionPolicies[i].DataObject = "policy"
+		policyCollectionItem, err = MarshalMap(e.CollectionPolicies[i])
+		batchItems = append(batchItems, &dynamodb.WriteRequest{
+			PutRequest: &dynamodb.PutRequest{
+				Item: policyCollectionItem,
+			},
+		})
+
+	}
+
+	for i := 0; i < len(e.Attributes); i++ {
+		e.Attributes[i].Pk = "STR-" + strconv.Itoa(nextIde)
+		if i+1 < 10 {
+			e.Attributes[i].Sk = "ATTR-" + "00" + strconv.Itoa(i+1)
+		} else if i+1 < 100 {
+			e.Attributes[i].Sk = "ATTR-" + "0" + strconv.Itoa(i+1)
+		} else {
+			e.Attributes[i].Sk = "ATTR-" + strconv.Itoa(i+1)
+		}
+		e.Attributes[i].DataObject = "attributes"
+		attributesItem, err = MarshalMap(e.Attributes[i])
+
+		batchItems = append(batchItems, &dynamodb.WriteRequest{
+			PutRequest: &dynamodb.PutRequest{
+				Item: attributesItem,
+			},
+		})
+
+	}
+
+	for i := 0; i < len(e.Client); i++ {
+		e.Client[i].Pk = "STR-" + strconv.Itoa(nextIde)
+		if i+1 < 10 {
+			e.Client[i].Sk = "CLIENTE#" + "00" + strconv.Itoa(i+1)
+		} else if i+1 < 100 {
+			e.Client[i].Sk = "CLIENTE#" + "0" + strconv.Itoa(i+1)
+		} else {
+			e.Client[i].Sk = "CLIENTE#" + strconv.Itoa(i+1)
+		}
+		e.Client[i].DataObject = "entityClient"
+		registerClientItem, err = MarshalMap(e.Client[i])
+
+		batchItems = append(batchItems, &dynamodb.WriteRequest{
+			PutRequest: &dynamodb.PutRequest{
+				Item: registerClientItem,
+			},
+		})
+
+	}
+
+	for i := 0; i < len(e.Certificate); i++ {
+		e.Certificate[i].Pk = "STR-" + strconv.Itoa(nextIde)
+		if i+1 < 10 {
+			e.Certificate[i].Sk = "CERTIFICATE#" + "00" + strconv.Itoa(i+1)
+		} else if i+1 < 100 {
+			e.Certificate[i].Sk = "CERTIFICATE#" + "0" + strconv.Itoa(i+1)
+		} else {
+			e.Certificate[i].Sk = "CERTIFICATE#" + strconv.Itoa(i+1)
+		}
+		e.Certificate[i].DataObject = "entityCertificate"
+		registerCertificateItem, err = MarshalMap(e.Certificate[i])
+
+		batchItems = append(batchItems, &dynamodb.WriteRequest{
+			PutRequest: &dynamodb.PutRequest{
+				Item: registerCertificateItem,
+			},
+		})
+
+	}
+
+	for i := 0; i < len(e.Role); i++ {
+		e.Role[i].Pk = "STR-" + strconv.Itoa(nextIde)
+		if i+1 < 10 {
+			e.Role[i].Sk = "ROLE#" + "00" + strconv.Itoa(i+1)
+		} else if i+1 < 100 {
+			e.Role[i].Sk = "ROLE#" + "0" + strconv.Itoa(i+1)
+		} else {
+			e.Role[i].Sk = "ROLE#" + strconv.Itoa(i+1)
+		}
+		e.Role[i].DataObject = "entityRole"
+		registerRoleItem, err = MarshalMap(e.Role[i])
+
+		batchItems = append(batchItems, &dynamodb.WriteRequest{
+			PutRequest: &dynamodb.PutRequest{
+				Item: registerRoleItem,
+			},
+		})
+
+	}
+
+	for i := 0; i < len(e.Policy); i++ {
+		e.Policy[i].Pk = "STR-" + strconv.Itoa(nextIde)
+		if i+1 < 10 {
+			e.Policy[i].Sk = "POLICY#" + "00" + strconv.Itoa(i+1)
+		} else if i+1 < 100 {
+			e.Policy[i].Sk = "POLICY#" + "0" + strconv.Itoa(i+1)
+		} else {
+			e.Policy[i].Sk = "POLICY#" + strconv.Itoa(i+1)
+		}
+		e.Policy[i].DataObject = "entityPolicy"
+
+		registerPolicyItem, err = MarshalMap(e.Policy[i])
+
+		batchItems = append(batchItems, &dynamodb.WriteRequest{
+			PutRequest: &dynamodb.PutRequest{
+				Item: registerPolicyItem,
+			},
+		})
+
+	}
+
+	for i := 0; i < len(e.Credit); i++ {
+		e.Credit[i].Pk = "STR-" + strconv.Itoa(nextIde)
+		if i+1 < 10 {
+			e.Credit[i].Sk = "CREDIT#" + "00" + strconv.Itoa(i+1)
+		} else if i+1 < 100 {
+			e.Credit[i].Sk = "CREDIT#" + "0" + strconv.Itoa(i+1)
+		} else {
+			e.Credit[i].Sk = "CREDIT#" + strconv.Itoa(i+1)
+		}
+		e.Credit[i].DataObject = "entityCredit"
+		registerCreditItem, err = MarshalMap(e.Credit[i])
+
+		batchItems = append(batchItems, &dynamodb.WriteRequest{
+			PutRequest: &dynamodb.PutRequest{
+				Item: registerCreditItem,
+			},
+		})
+
+	}
+
+	chunkSize := 10
+
+	for i := 0; i < len(batchItems); i += chunkSize {
+		end := i + chunkSize
+
+		if end > len(batchItems) {
+			end = len(batchItems)
 		}
 
-		atributoFuncionArray = append(atributoFuncionArray, atributoFuncionElement)
-	}
+		batch := batchItems[i:end]
 
-	fmt.Println("atributoFuncionArray")
-	fmt.Println(atributoFuncionArray)
+		out, err := svc.BatchWriteItem(&dynamodb.BatchWriteItemInput{
+			RequestItems: map[string][]*dynamodb.WriteRequest{
+				TABLENAME: batch,
+			},
+		})
 
-	// Hashmap de atributo con su respectivas funciones
-	mapAtributoFuncionArgumento := make(map[string]FuncionArgumento)
+		fmt.Println(err)
 
-	for atributoFuncionArrayContador := range atributoFuncionArray {
-		mapAtributoFuncionArgumento[atributoFuncionArray[atributoFuncionArrayContador].Atributo] = atributoFuncionArray[atributoFuncionArrayContador].FuncionArgumentos
-	}
-
-	fmt.Println("mapAtributoFuncionArgumento")
-	fmt.Println(mapAtributoFuncionArgumento)
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	// Convierte el archivo (matriz) a un array que junta al atributo con su valor
-	atributoValorList := []RegistroAtributoValor{}
-
-	for rowIndex, rowValues := range result.GetRows("Sheet1")[1:] {
-		for columnIndex, columnValue := range rowValues {
-			element := RegistroAtributoValor{
-				Atributo: mapFirstRows[columnIndex],
-				Registro: rowIndex,
-				Valor:    columnValue,
-			}
-			atributoValorList = append(atributoValorList, element)
+		if out.UnprocessedItems != nil {
+			fmt.Println("Unprocessed items")
 		}
 	}
 
-	fmt.Println("atributoValorList")
-	fmt.Println(atributoValorList)
-
-	// //////////////////////////////////////////////////////////////////////////////////////////////
-
-	valorFuncionList := []RegistroAtributoValorFuncionArgumento{}
-
-	for valorFuncionListContador := 0; valorFuncionListContador < len(atributoValorList); valorFuncionListContador++ {
-		// 	// 	// element := ValorFuncion{
-		// 	// 	// 	Valor:   atributoValorList[valorFuncionListContador].Valor,
-		// 	// 	// 	Funcion: mapAtributoFuncion[atributoValorList[valorFuncionListContador].Atributo],
-		// 	// 	// }
-		// 	// 	// valorFuncionList = append(valorFuncionList, element)
-		if val, ok := mapAtributoFuncionArgumento[atributoValorList[valorFuncionListContador].Atributo]; ok {
-			element := RegistroAtributoValorFuncionArgumento{
-				Registro:   atributoValorList[valorFuncionListContador].Registro,
-				Valor:      atributoValorList[valorFuncionListContador].Valor,
-				Atributo:   val.Atributo,
-				Funcion:    val.Funcion,
-				Argumentos: val.Argumento,
-			}
-			valorFuncionList = append(valorFuncionList, element)
-		}
+	input := &dynamodb.UpdateItemInput{
+		TableName: aws.String(TABLENAME),
+		Key: map[string]*dynamodb.AttributeValue{
+			"pk": {
+				S: aws.String("NUMERATOR"),
+			},
+			"sk": {
+				S: aws.String("NUMERATOR"),
+			},
+		},
+		UpdateExpression: aws.String("set ide = :ide"),
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":ide": {
+				N: aws.String(strconv.Itoa(nextIde)),
+			},
+		},
+		ReturnValues: aws.String("UPDATED_NEW"),
 	}
 
-	fmt.Println("valorFuncionList")
-	fmt.Println(valorFuncionList)
+	_, err = svc.UpdateItem(input)
 
-	var output = [][]RegistroAtributoValorFuncionArgumento{}
-
-	for i := 0; i < len(valorFuncionList); i += len(columnas) {
-		output = append(output, valorFuncionList[i:i+len(columnas)])
+	if err != nil {
+		panic(fmt.Sprintf("failed to update item, %v", err))
 	}
 
-	fmt.Println("output")
-	fmt.Println(output)
-
-	return output, nil
+	return true, nil
 }
 
 func main() {
+	// Make the handler available for Remote Procedure Call by Cloud Function
 	lambda.Start(handler)
 }
 
@@ -331,19 +374,8 @@ func MarshalMap(in interface{}) (map[string]*dynamodb.AttributeValue, error) {
 
 	return av.M, nil
 }
-
 func getEncoder() *dynamodbattribute.Encoder {
 	encoder := dynamodbattribute.NewEncoder()
 	encoder.NullEmptyString = false
 	return encoder
-}
-
-func OpenFile(filename s3.GetObjectOutput) (*excelize.File, error) {
-
-	buff := new(bytes.Buffer)
-	buff.ReadFrom(filename.Body)
-
-	f, _ := excelize.OpenReader(buff)
-
-	return f, nil
 }
