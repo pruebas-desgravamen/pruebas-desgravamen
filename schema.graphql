@@ -281,9 +281,9 @@ type Query{
   ###################CARGA MASIVA######################
   #####################################################
   # getStructureCarga(xRuc:String, xPoliza: String, xContratante: String): contratnte profucto canal de venta   ruc  # falta crear, hablar con gustavo para ver tema de lectura de datos para creacion de tramas
-  getStructurePolicy (policy: String): GetStructurePolicyOutput # GSI-3-PK
-  getStructureRuc (ruc: String): GetStructureRucOutput # GSI-3-PK
-  getStructureContractor (contractor: String): GetStructureContractorOutput # GSI-3-PK
+  getStructurePolicy (policy: String): [GetStructurePolicyOutput] # GSI-3-PK
+  getStructureRuc (ruc: String): [GetStructureRucOutput] # GSI-3-PK
+  getStructureContractor (contractor: String): [GetStructureContractorOutput] # GSI-3-PK
 
   # Done
   listProcesses(limit: Int, nextToken: String): AllProcessesOutput

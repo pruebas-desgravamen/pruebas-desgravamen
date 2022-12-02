@@ -33,6 +33,7 @@ Resources:
                   - !Ref ActiveStructureStateMachine
 =======
 >>>>>>> Stashed changes
+                  - !Ref ValidationFirstRegistryStateMachine
               - Effect: Allow
                 Action:
                   - dynamodb:GetItem
@@ -623,97 +624,9 @@ Resources:
               source:
                 - aws.s3 
 
-  ValidationFirstRegistryStateMachine:
-    Type: AWS::Serverless::StateMachine
-    Properties:
-      DefinitionUri: statemachines/validation_first_registry.asl.json
-      Type: EXPRESS
-      Name: validation_first_registry
-      DefinitionSubstitutions:
-<<<<<<< Updated upstream
-        GagaFunctionArn: !GetAtt GagaFunction.Arn
-        ValidationFirstRegistryFunctionArn: !GetAtt ValidationFirstRegistryFunction.Arn
-        ReadFilenameFunctionArn: !GetAtt ReadFilenameFunction.Arn
-        DDBQuery: arn:aws:states:::aws-sdk:dynamodb:query
-        TABLE_NAME_CONFIGURADOR: !Ref DBConfigurador
-        TABLE_NAME_PROCESSES: !Ref DBProcesses
-
-=======
-        ValidationFunctionArn: !GetAtt ValidationFunction.Arn
-        ValidationFirstRegistryFunctionArn: !GetAtt ValidationFirstRegistryFunction.Arn
->>>>>>> Stashed changes
-      Logging:
-        Destinations:
-          - CloudWatchLogsLogGroup:
-              LogGroupArn: !GetAtt ValidationFirstRegistryLogs.Arn
-        IncludeExecutionData: true
-        Level: ALL  
-      Policies: 
-<<<<<<< Updated upstream
-        - DynamoDBCrudPolicy:
-            TableName: !Ref DBConfigurador
-        - DynamoDBCrudPolicy:
-            TableName: !Ref DBProcesses
-        - LambdaInvokePolicy:
-            FunctionName: !Ref GagaFunction
-        - LambdaInvokePolicy:
-            FunctionName: !Ref ValidationFirstRegistryFunction
-        - LambdaInvokePolicy:
-            FunctionName: !Ref ReadFilenameFunction
-=======
-        - LambdaInvokePolicy:
-            FunctionName: !Ref ValidationFunction
-        - LambdaInvokePolicy:
-            FunctionName: !Ref ValidationFirstRegistryFunction
->>>>>>> Stashed changes
-        - CloudWatchLogsFullAccess
-      Events:
-        EBRule:
-          Type: EventBridgeRule
-          Properties:
-            InputPath: "$.detail"
-            Pattern:
-              detail:
-                bucket:
-                  name:
-                    - !Ref DataBucket                
-              detail-type:
-                - "Object Created"
-              source:
-                - aws.s3 
-<<<<<<< Updated upstream
-  ActiveStructureStateMachine:
-    Type: AWS::Serverless::StateMachine
-    Properties:
-      DefinitionUri: statemachines/activeStructure.asl.json
-      Type: EXPRESS
-      Name: ActiveStructureStateMachine
-      DefinitionSubstitutions:
-        DDBUpdateItem: !Sub arn:${AWS::Partition}:states:::dynamodb:updateItem
-        DDBQuery: arn:aws:states:::aws-sdk:dynamodb:query     
-        TABLE_NAME_CONFIGURADOR: !Ref DBConfigurador
-      Logging:
-        Destinations:
-          - CloudWatchLogsLogGroup:
-              LogGroupArn: !GetAtt StateMachineActiveLogs.Arn
-        IncludeExecutionData: true
-        Level: ALL  
-      Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref DBConfigurador
-        - CloudWatchLogsFullAccess
-=======
-
->>>>>>> Stashed changes
  ###############      
  ## LOGS      ##
  ###############  
-
-  ValidationFirstRegistryLogs:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub /aws/vendedlogs/states/${AWS::StackName}/validation-first-registry
-      RetentionInDays: 3
 
   ValidationsLogs:
     Type: AWS::Logs::LogGroup
@@ -1025,37 +938,6 @@ Resources:
                 - "Object Created"
               source:
                 - aws.s3 
-
-  ValidationFirstRegistryFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: functions/validation-first-registry
-      Handler: validation-first-registry
-      Runtime: go1.x
-      MemorySize: 2048 
-      Timeout: 300
-      Environment:
-        Variables:
-          BUCKET_NAME: !Ref DataBucket
-<<<<<<< Updated upstream
-          TABLA_NAME_TRAMAS: !Ref DBProcesses
-=======
-          TABLA_NAME_TRAMAS: !Ref DBTramas
->>>>>>> Stashed changes
-          TABLA_NAME_CONFIGURADOR: !Ref DBConfigurador
-          REGION: !Sub ${AWS::Region}
-      Policies: 
-        - DynamoDBCrudPolicy:
-<<<<<<< Updated upstream
-            TableName: !Ref DBProcesses
-=======
-            TableName: !Ref DBTramas
->>>>>>> Stashed changes
-        - DynamoDBCrudPolicy:
-            TableName: !Ref DBConfigurador
-        - AWSLambdaBasicExecutionRole
-        - S3ReadPolicy:
-            BucketName: !Ref DataBucket
 
   GagaFunction:         
     Type: AWS::Serverless::Function
