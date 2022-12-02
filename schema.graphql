@@ -245,27 +245,39 @@ type Mutation {
   
 }
 
-type GetStructurePolicyOutput{
+type StructurePolicyOutput{
+  structurePolicy: [StructurePolicy]
+}
+
+type StructurePolicy{
   contractor: String
   product: String
   salesChannel: String
   structureName: String
 }
 
-type GetStructureRucOutput{
+type StructureRucOutput{
+  structureRuc: [StructureRuc]
+}
+
+type StructureRuc{
   contractor: String
   product: String
   salesChannel: String
   structureName: String
-  nPolicy: [String]
+  nPolicy: String
 }
 
-type GetStructureContractorOutput{
+type StructureContractorOutput{
+  structureContractor: [StructureContractor]
+}
+
+type StructureContractor{
   ruc: String
   product: String
   salesChannel: String
   structureName: String
-  nPolicy: [String]
+  nPolicy: String
 }
 
 
@@ -281,9 +293,9 @@ type Query{
   ###################CARGA MASIVA######################
   #####################################################
   # getStructureCarga(xRuc:String, xPoliza: String, xContratante: String): contratnte profucto canal de venta   ruc  # falta crear, hablar con gustavo para ver tema de lectura de datos para creacion de tramas
-  getStructurePolicy (policy: String): [GetStructurePolicyOutput] # GSI-3-PK
-  getStructureRuc (ruc: String): [GetStructureRucOutput] # GSI-3-PK
-  getStructureContractor (contractor: String): [GetStructureContractorOutput] # GSI-3-PK
+  storeProcessXPolicy (policy: String): StructurePolicyOutput # GSI-3-PK
+  storeProcessXRuc (ruc: String): StructureRucOutput # GSI-3-PK
+  storeProcessXContractor (contractor: String): StructureContractorOutput # GSI-3-PK
 
   # Done
   listProcesses(limit: Int, nextToken: String): AllProcessesOutput
