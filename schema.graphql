@@ -197,7 +197,9 @@ type Entity{
   description: String!
   origin: String!
   value: String!
+  equivalence:[String]!
 }
+## ["masculino:1","femenino:2"]
 
 type Structure {
   #Datos Generales
@@ -277,7 +279,7 @@ type Query{
   #####################################################
   ####################ESTRUCTURAS######################
   #####################################################
-  getStructure(structureId:Int!):Structure  # falta obtener una estructura
+  getStructure(structureId:String!):Structure  # falta obtener una estructura
   # getAllStructures: [Structure]    # listar estructuras posiblemente?
 
   #####################################################

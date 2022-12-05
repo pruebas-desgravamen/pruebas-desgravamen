@@ -54,6 +54,7 @@ Resources:
                   - !GetAtt StoreStructureFunction.Arn
                   - !GetAtt ReadFilenameFunction.Arn
                   - !GetAtt UpdateStructureFunction.Arn
+                  - !GetAtt GetStructureFunction.Arn
 
   AppSyncApi:
     DependsOn: AppSyncServiceRole
@@ -133,6 +134,16 @@ Resources:
       ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
       LambdaConfig:
         LambdaFunctionArn: !GetAtt StoreStructureFunction.Arn
+  
+  GetStructureDataSource:
+    Type: "AWS::AppSync::DataSource"
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      Name: getStructureDataSource
+      Type: AWS_LAMBDA
+      ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
+      LambdaConfig:
+        LambdaFunctionArn: !GetAtt GetStructureFunction.Arn
 
   UpdateStructureDataSource:
     Type: "AWS::AppSync::DataSource"
@@ -237,7 +248,24 @@ Resources:
           }
         }
       ResponseMappingTemplate: $util.toJson($context.result)
-  
+
+  GetStructureResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Query
+      FieldName: getStructure
+      DataSourceName: !GetAtt GetStructureDataSource.Name
+      RequestMappingTemplate: !Sub >
+        {
+          "version": "2017-02-28",
+          "operation": "Invoke",
+          "payload": {
+            "structureId": $utils.toJson($ctx.args.structureId)
+          }
+        }
+      ResponseMappingTemplate: $util.toJson($context.result)
+
   UpdateStructureResolver:
     Type: AWS::AppSync::Resolver
     Properties:
@@ -360,162 +388,6 @@ Resources:
             }#if($foreach.hasNext),#end
             #end
           ]
-        }
-
-  GetStructureResolver:
-    Type: AWS::AppSync::Resolver
-    DependsOn: AppSyncSchema
-    Properties:
-      ApiId: !GetAtt AppSyncApi.ApiId
-      TypeName: Query
-      FieldName: getStructure
-      DataSourceName: !GetAtt DBConfiguradorDataSource.Name
-      RequestMappingTemplate: >
-       {
-          "version": "2017-02-28",
-          "operation": "Query",
-          "query": {
-            "expression": "pk = :pk",
-            "expressionValues": {
-              #set($pk = "STR-"+${ctx.args.structureId})
-              ":pk": {
-                "S": "$pk"
-              }
-            }
-          }
-       }
-      ResponseMappingTemplate: >
-        {   
-            #set($structureName ="")
-            #set($transaction ="")
-            #set($branch ="")
-            #set($header ="")
-            #set($certificateByRole ="")
-            #set($rowsOrderByRole ="")
-            #set($fileFormat ="")
-            #set($dateFormat ="")
-            #set($policy = [])
-            #set($credit = [])
-            #set($role = [])
-            #set($certificate = [])
-            #set($client = [])
-            #set($attributes = [])
-            #set($policyent = []) 
-
-            #foreach($item in $ctx.result.items)
-              #if($item.DataObject == "details")
-                #set($structureName = $item.structureName)
-                #set($transaction = $item.transaction)
-                #set($branch = $item.branch)
-                #set($header = $item.header)
-                #set($certificateByRole = $item.certificateByRole)
-                #set($rowsOrderByRole = $item.rowsOrderByRole)
-                #set($fileFormat = $item.fileFormat)
-                #set($dateFormat = $item.dateFormat)
-              #end
-
-              #if($item.DataObject == "policy")
-                  $util.quiet($policy.add(
-                  {
-                    "product": $item.product,
-                    "nPolicy": $item.nPolicy,
-                    "contractor": $item.contractor,
-                    "salesChannel": $item.salesChannel,
-                    "startDate": $item.startDate,
-                    "expirDate": $item.expirDate,
-                    "currency": $item.currency,
-                    "ruc": $item.ruc,
-                    "functions": $item.functions
-                  }
-                ))
-              #end
-
-              #if($item.DataObject == "entityCredit")
-                  $util.quiet($credit.add(
-                  {
-                    "id": $item.id,
-                    "value": $item.value,
-                    "description": $item.description,
-                    "origin": $item.origin
-                  }
-                ))
-              #end
-
-              #if($item.DataObject == "entityRole")
-                  $util.quiet($role.add(
-                  {
-                    "id": $item.id,
-                    "value": $item.value,
-                    "description": $item.description,
-                    "origin": $item.origin
-                  }
-                ))
-              #end
-
-              #if($item.DataObject == "entityCertificate")
-                  $util.quiet($certificate.add(
-                  {
-                    "id": $item.id,
-                    "value": $item.value,
-                    "description": $item.description,
-                    "origin": $item.origin
-                  }
-                ))
-              #end
-
-              #if($item.DataObject == "entityClient")
-                  $util.quiet($client.add(
-                  {
-                    "id": $item.id,
-                    "value": $item.value,
-                    "description": $item.description,
-                    "origin": $item.origin
-                  }
-                ))
-              #end
-
-              #if($item.DataObject == "entityPolicy")
-                  $util.quiet($policyent.add(
-                  {
-                    "id": $item.id,
-                    "value": $item.value,
-                    "description": $item.description,
-                    "origin": $item.origin
-                  }
-                ))
-              #end
-
-
-              #if($item.DataObject == "attributes")
-                  $util.quiet($attributes.add(
-                  {
-                    "id": $item.id,
-                    "tipo": $item.tipo,
-                    "value": $item.value,
-                    "description": $item.description,
-                    "origin": $item.origin
-                  }
-                ))
-              #end
-
-            #end   
-
-            "structureName": $util.toJson($structureName),
-            "transaction": $util.toJson($transaction),
-            "branch": $util.toJson($branch),
-            "header": $util.toJson($header),
-            "certificateByRole": $util.toJson($certificateByRole),
-            "rowsOrderByRole": $util.toJson($rowsOrderByRole),
-            "fileFormat": $util.toJson($fileFormat),
-            "dateFormat": $util.toJson($dateFormat),
-            "policyCollection": $util.toJson($policy),
-            "attributes": $util.toJson($attributes),
-            "client": $util.toJson($client),
-            "certificate": $util.toJson($certificate),
-            "role": $util.toJson($role),
-            "policy": $util.toJson($policyent),
-            "credit": $util.toJson($credit),
-
         }
 
   ActiveStructureResolver:
@@ -888,7 +760,20 @@ Resources:
         - AWSLambdaBasicExecutionRole
         - DynamoDBCrudPolicy:
             TableName: !Ref DBConfigurador
-
+  GetStructureFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./functions/configurador/get
+      Handler: handler
+      Runtime: go1.x
+      Environment:
+        Variables:
+          TableName: !Ref DBConfigurador
+          Region: !Sub ${AWS::Region}
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DBConfigurador
   # Validacion
   ValidationFunction:
     Type: AWS::Serverless::Function
