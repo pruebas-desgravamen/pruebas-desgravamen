@@ -67,18 +67,6 @@ type AllProcessesOutput{
 #####################  INPUT  #####################
 ###################################################
 
-input DetailsInput{
-  structureName: String!
-  transaction: String!
-  branch: String!
-  header: String!
-  certificateByRole: String!
-  rowsOrderByRole: String!
-  fileFormat: String!
-  dateFormat: String!
-}
-
-
 
 input PolicyInput{
   product: String!
@@ -93,7 +81,7 @@ input PolicyInput{
 }
 
 input AtributeInput{
-  id: String!
+  id: String
   attribute: String!
   dataType: String!
   required: String!
@@ -105,20 +93,13 @@ input AtributeInput{
 }
 
 input EntityInput{
-
+  entityId: String
   attribute: String!
   description: String!
   origin: String!
   value: String!
 }
 
-# input RegistrarInput{
-#   client: [EntityInput]!
-#   certificate: [EntityInput]!
-#   role: [EntityInput]!
-#   policy: [EntityInput]!
-#   credit: [EntityInput]!
-# }
 
 input StructureInput {
   #Datos Generales
@@ -147,6 +128,39 @@ input StructureInput {
 
   #Si es update
   structureId: Int
+}
+
+enum Operation{
+  INSERT
+  UPDATE
+  DELETE
+}
+
+input UpdateObject{
+  op: Operation
+  dataObject: String
+
+  structureName: String
+  transaction: String
+  branch: String
+  header: String
+  certificateByRole: String
+  rowsOrderByRole: String
+  fileFormat: String
+  dateFormat: String
+
+  policy: PolicyInput
+  attributes: AtributeInput
+  clientEntity: EntityInput
+  certificateEntity: EntityInput
+  roleEntity: EntityInput
+  policyEntity: EntityInput
+  creditEntity: EntityInput
+}
+
+input UpdateStructureInput{
+  structureId: String!
+  updateObject: [UpdateObject]!
 }
 
 ###################################################
@@ -183,17 +197,6 @@ type Entity{
   description: String!
   origin: String!
   value: String!
-}
-
-type Details{
-  structureName: String!
-  transaction: String!
-  branch: String!
-  header: String!
-  certificateByRole: String!
-  rowsOrderByRole: String!
-  fileFormat: String!
-  dateFormat: String!
 }
 
 type Structure {
@@ -233,7 +236,7 @@ type Mutation {
   # deleteStructure(structureId:String!):Boolean # falta eliminar una estructura
   activeStructure(structureId: Int, state:Boolean):Boolean # falta activar o desactivar una estructura
   # # cloneStructure(???): Boolean # falta clonar una estructura
-  # updateStructure(event: StructureInput!): Boolean #borrar y crear?
+  updateStructure(event: UpdateStructureInput!): Boolean # falta actualizar una estructura
 
   #####################################################
   ###################CARGA MASIVA######################

@@ -53,6 +53,7 @@ Resources:
                 Resource: 
                   - !GetAtt StoreStructureFunction.Arn
                   - !GetAtt ReadFilenameFunction.Arn
+                  - !GetAtt UpdateStructureFunction.Arn
 
   AppSyncApi:
     DependsOn: AppSyncServiceRole
@@ -132,6 +133,16 @@ Resources:
       ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
       LambdaConfig:
         LambdaFunctionArn: !GetAtt StoreStructureFunction.Arn
+
+  UpdateStructureDataSource:
+    Type: "AWS::AppSync::DataSource"
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      Name: updateStrucureDataSource
+      Type: AWS_LAMBDA
+      ServiceRoleArn: !GetAtt AppSyncServiceRole.Arn
+      LambdaConfig:
+        LambdaFunctionArn: !GetAtt UpdateStructureFunction.Arn
   
  ###############      
  ## RESOLVERS ##
@@ -226,7 +237,23 @@ Resources:
           }
         }
       ResponseMappingTemplate: $util.toJson($context.result)
-
+  
+  UpdateStructureResolver:
+    Type: AWS::AppSync::Resolver
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Mutation
+      FieldName: updateStructure
+      DataSourceName: !GetAtt UpdateStructureDataSource.Name
+      RequestMappingTemplate: !Sub >
+        {
+          "version": "2017-02-28",
+          "operation": "Invoke",
+          "payload": {
+            "event": $utils.toJson($context.args.event)
+          }
+        }
+      ResponseMappingTemplate: $util.toJson($context.result)
   # OKAY: true
   GetStructurePolicy:
     Type: AWS::AppSync::Resolver
@@ -447,11 +474,10 @@ Resources:
                 ))
               #end
 
-              #if($item.DataObject == "attributes")
-                  $util.quiet($attributes.add(
+              #if($item.DataObject == "entityPolicy")
+                  $util.quiet($policyent.add(
                   {
                     "id": $item.id,
-                    "tipo": $item.tipo,
                     "value": $item.value,
                     "description": $item.description,
                     "origin": $item.origin
@@ -459,10 +485,12 @@ Resources:
                 ))
               #end
 
-              #if($item.DataObject == "entityPolicy")
-                  $util.quiet($policyent.add(
+
+              #if($item.DataObject == "attributes")
+                  $util.quiet($attributes.add(
                   {
                     "id": $item.id,
+                    "tipo": $item.tipo,
                     "value": $item.value,
                     "description": $item.description,
                     "origin": $item.origin
@@ -845,7 +873,21 @@ Resources:
         - AWSLambdaBasicExecutionRole
         - DynamoDBCrudPolicy:
             TableName: !Ref DBConfigurador
-
+ 
+  UpdateStructureFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./functions/configurador/update
+      Handler: handler
+      Runtime: go1.x
+      Environment:
+        Variables:
+          TableName: !Ref DBConfigurador
+          Region: !Sub ${AWS::Region}
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DBConfigurador
 
   # Validacion
   ValidationFunction:
