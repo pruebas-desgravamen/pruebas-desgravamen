@@ -79,7 +79,9 @@ type Entity struct {
 	Description string `json:"description"`
 	Origin      string `json:"origin"`
 	Value       string `json:"value"`
+	Equivalence []string `json:"equivalence"`
 	DataObject  string `default:"entity"`
+
 }
 
 type Configuration struct {
@@ -219,11 +221,11 @@ func handler(ctx context.Context, config ConfigEvent) (bool, error) {
 	for i := 0; i < len(e.Client); i++ {
 		e.Client[i].Pk = "STR-" + strconv.Itoa(nextIde)
 		if i+1 < 10 {
-			e.Client[i].Sk = "CLIENTE#" + "00" + strconv.Itoa(i+1)
+			e.Client[i].Sk = "CLIENT#" + "00" + strconv.Itoa(i+1)
 		} else if i+1 < 100 {
-			e.Client[i].Sk = "CLIENTE#" + "0" + strconv.Itoa(i+1)
+			e.Client[i].Sk = "CLIENT#" + "0" + strconv.Itoa(i+1)
 		} else {
-			e.Client[i].Sk = "CLIENTE#" + strconv.Itoa(i+1)
+			e.Client[i].Sk = "CLIENT#" + strconv.Itoa(i+1)
 		}
 		e.Client[i].DataObject = "entityClient"
 		registerClientItem, err = MarshalMap(e.Client[i])
@@ -328,16 +330,16 @@ func handler(ctx context.Context, config ConfigEvent) (bool, error) {
 
 		batch := batchItems[i:end]
 
-		out, err := svc.BatchWriteItem(&dynamodb.BatchWriteItemInput{
+		input := &dynamodb.BatchWriteItemInput{
 			RequestItems: map[string][]*dynamodb.WriteRequest{
 				TABLENAME: batch,
 			},
-		})
+		}
 
-		fmt.Println(err)
+		_, err = svc.BatchWriteItem(input)
 
-		if out.UnprocessedItems != nil {
-			fmt.Println("Unprocessed items")
+		if err != nil {
+			panic(err)
 		}
 	}
 

@@ -1,0 +1,31 @@
+{
+  "Comment": "Validaciones",
+  "StartAt": "Get Structure",
+  "States": {
+    "Get Structure":{
+      "Type": "Task",
+          "Resource": "${DDBQuery}",
+          "Parameters": {
+              "TableName": "${TableName}",
+              "KeyConditionExpression": "pk = :pk",
+              "ExpressionAttributeValues": {
+                  ":pk": {
+                      "S.$": "$$.Execution.Input.structureId"
+                  }
+              }
+          },
+          "ResultSelector": {
+              "Items.$": "$.Items"
+          },
+          "Next": "Delete Structure"
+    },
+    "Delete Structure":{
+      "Type": "Task",
+      "Parameters": {
+          "structure.$": "$.Items"
+      },
+      "Resource": "${DeleteStructureFunctionArn}",
+      "End": true
+    }
+  }
+}

@@ -30,6 +30,7 @@ Resources:
                   - !Ref ValidationsStateMachine
                   - !Ref ValidationFirstRegistryStateMachine
                   - !Ref ActiveStructureStateMachine
+                  - !Ref DeleteStructureStateMachine
               - Effect: Allow
                 Action:
                   - dynamodb:GetItem
@@ -55,6 +56,7 @@ Resources:
                   - !GetAtt ReadFilenameFunction.Arn
                   - !GetAtt UpdateStructureFunction.Arn
                   - !GetAtt GetStructureFunction.Arn
+                  - !GetAtt DeleteStructureFunction.Arn
 
   AppSyncApi:
     DependsOn: AppSyncServiceRole
@@ -268,6 +270,7 @@ Resources:
 
   UpdateStructureResolver:
     Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
     Properties:
       ApiId: !GetAtt AppSyncApi.ApiId
       TypeName: Mutation
@@ -392,6 +395,7 @@ Resources:
 
   ActiveStructureResolver:
     Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
     Properties:
       ApiId: !GetAtt AppSyncApi.ApiId
       TypeName: Mutation
@@ -414,6 +418,85 @@ Resources:
             "body": {
               "stateMachineArn": "${ActiveStructureStateMachine}",
               "input": "{ \"structureId\": $util.escapeJavaScript($util.toJson($ctx.args.structureId)), \"state\": $util.escapeJavaScript($util.toJson($stateString))}"
+            }
+          }
+        }
+      ResponseMappingTemplate: $util.parseJson($ctx.result.body).output
+
+  GetAllStructuresResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Query
+      FieldName: getAllStructures
+      DataSourceName: !GetAtt DBConfiguradorDataSource.Name
+      RequestMappingTemplate: >
+       {
+          "version": "2017-02-28",
+          "operation": "Query",
+          "index": "sk-detail",
+          "query": {
+            "expression": "sk = :sk",
+            "expressionValues": {
+              ":sk": {
+                "S": "DETAIL"
+              }
+            }
+          }
+          #if($context.args.nextToken) 
+            ,"nextToken": $util.toJson($context.args.nextToken),
+          #end
+          
+          #if($context.args.limit)
+            ,"limit": $util.toJson($context.args.limit)
+          #end
+          #if(!$context.args.limit)
+            ,"limit": 10
+          #end
+       }
+      ResponseMappingTemplate: >
+        {  
+          "items": [
+                        #foreach($item in $ctx.result.items)                        
+                        {
+                          "structureName": $util.toJson($item.structureName),
+                          "transaction": $util.toJson($item.transaction),
+                          "branch": $util.toJson($item.branch),
+                          "header": $util.toJson($item.header),
+                          "certificateByRole": $util.toJson($item.certificateByRole),
+                          "rowsOrderByRole": $util.toJson($item.rowsOrderByRole),
+                          "fileFormat": $util.toJson($item.fileFormat),
+                          "dateFormat": $util.toJson($item.dateFormat),
+                          "state": $util.toJson($item.state)
+                        }#if($foreach.hasNext),#end
+
+                        #end
+                    ],
+          "nextToken": $util.toJson($ctx.result.nextToken) 
+        }
+
+  DeleteStructureResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: AppSyncSchema
+    Properties:
+      ApiId: !GetAtt AppSyncApi.ApiId
+      TypeName: Mutation
+      FieldName: deleteStructure
+      DataSourceName: !GetAtt StepFunctionsHttpDataSource.Name
+      RequestMappingTemplate: !Sub >
+        {
+          "version": "2018-05-29",
+          "method": "POST",
+          "resourcePath": "/",
+          "params": {
+            "headers": {
+              "content-type": "application/x-amz-json-1.0",
+              "x-amz-target":"AWSStepFunctions.StartSyncExecution"
+            },
+            "body": {
+              "stateMachineArn": "${DeleteStructureStateMachine}",
+              "input": "{ \"structureId\": $util.escapeJavaScript($util.toJson($ctx.args.structureId))}"
             }
           }
         }
@@ -551,9 +634,37 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref DBConfigurador
         - CloudWatchLogsFullAccess
+
+  DeleteStructureStateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      DefinitionUri: statemachines/deleteStructure.asl.json
+      Type: EXPRESS
+      Name: DeleteStructureStateMachine
+      DefinitionSubstitutions:
+        DDBQuery: arn:aws:states:::aws-sdk:dynamodb:query     
+        TableName: !Ref DBConfigurador
+        DeleteStructureFunctionArn: !GetAtt DeleteStructureFunction.Arn
+      Logging:
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt DeleteStructureStateMachineLogs.Arn
+        IncludeExecutionData: true
+        Level: ALL  
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DBConfigurador
+        - LambdaInvokePolicy:
+            FunctionName: !Ref DeleteStructureFunction
+        - CloudWatchLogsFullAccess
  ###############      
  ## LOGS      ##
  ###############  
+  DeleteStructureStateMachineLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/vendedlogs/states/${AWS::StackName}/deleteStructure
+      RetentionInDays: 3
 
   ValidationsLogs:
     Type: AWS::Logs::LogGroup
@@ -686,7 +797,14 @@ Resources:
             KeyType: RANGE
         Projection:
           ProjectionType: ALL ##CAMBIARRR
-
+      - IndexName: sk-detail
+        KeySchema:
+          - AttributeName: sk
+            KeyType: HASH
+          - AttributeName: pk
+            KeyType: RANGE
+        Projection:
+          ProjectionType: ALL ##CAMBIARRR
 
  ###############      
  ## Functions ##
@@ -735,6 +853,21 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: ./functions/configurador/put
+      Handler: handler
+      Runtime: go1.x
+      Environment:
+        Variables:
+          TableName: !Ref DBConfigurador
+          Region: !Sub ${AWS::Region}
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DBConfigurador
+
+  DeleteStructureFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./functions/configurador/delete
       Handler: handler
       Runtime: go1.x
       Environment:

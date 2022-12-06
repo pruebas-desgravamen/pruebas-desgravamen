@@ -43,6 +43,7 @@ type EntityType struct{
 	Description string `json:"description"`
 	Origin string `json:"origin"`
 	Value string `json:"value"`
+	Equivalences []string `json:"equivalences"`
 }
 
 
@@ -431,11 +432,16 @@ func handler(ctx context.Context, e UpdateEvent)(bool, error) {
 				panic(fmt.Sprintf("failed to process item, %v", err))
 			}
 		} else if object.DataObject == "entityClient" {
-		
+			equivalenceArr := []*dynamodb.AttributeValue{}
+			for _,equi := range object.ClientEntity.Equivalences {
+				equivalenceArr = append(equivalenceArr, &dynamodb.AttributeValue{
+					S: aws.String(equi),
+				})
+			}
+			
 
 			input := &dynamodb.UpdateItemInput{
 				ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-
 					":attribute": {
 						S: aws.String(object.ClientEntity.Attribute),
 					},
@@ -447,6 +453,9 @@ func handler(ctx context.Context, e UpdateEvent)(bool, error) {
 					},
 					":value": {
 						S: aws.String(object.ClientEntity.Value),
+					},
+					":equivalence": {
+						L: equivalenceArr,
 					},
 					
 				},
@@ -464,7 +473,7 @@ func handler(ctx context.Context, e UpdateEvent)(bool, error) {
 				},
 				ReturnValues:     aws.String("UPDATED_NEW"),
 				TableName:        aws.String(TABLENAME),
-				UpdateExpression: aws.String("SET #attribute = :attribute, description = :description, origin = :origin, #value = :value"),
+				UpdateExpression: aws.String("SET #attribute = :attribute, description = :description, origin = :origin, #value = :value , equivalence = :equivalence"),
 			}
 
 			_, err := svc.UpdateItem(input)
@@ -472,7 +481,13 @@ func handler(ctx context.Context, e UpdateEvent)(bool, error) {
 				panic(fmt.Sprintf("failed to update item, %v", err))
 			}
 		} else if object.DataObject == "entityCertificate" {
-		
+			equivalenceArr := []*dynamodb.AttributeValue{}
+			
+			for _,equi := range object.CertificateEntity.Equivalences {
+				equivalenceArr = append(equivalenceArr, &dynamodb.AttributeValue{
+					S: aws.String(equi),
+				})
+			}
 
 			input := &dynamodb.UpdateItemInput{
 				ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
@@ -488,6 +503,9 @@ func handler(ctx context.Context, e UpdateEvent)(bool, error) {
 					},
 					":value": {
 						S: aws.String(object.CertificateEntity.Value),
+					},
+					":equivalence": {
+						L: equivalenceArr,
 					},
 				},
 				ExpressionAttributeNames: map[string]*string{
@@ -505,7 +523,7 @@ func handler(ctx context.Context, e UpdateEvent)(bool, error) {
 				},
 				ReturnValues:     aws.String("UPDATED_NEW"),
 				TableName:        aws.String(TABLENAME),
-				UpdateExpression: aws.String("SET #attribute = :attribute, description = :description, origin = :origin, #value = :value"),
+				UpdateExpression: aws.String("SET #attribute = :attribute, description = :description, origin = :origin, #value = :value , equivalence = :equivalence"),
 			}
 
 			_, err := svc.UpdateItem(input)
@@ -513,7 +531,13 @@ func handler(ctx context.Context, e UpdateEvent)(bool, error) {
 				panic(fmt.Sprintf("failed to update item, %v", err))
 			}
 		} else if object.DataObject == "entityRole" {
+			equivalenceArr := []*dynamodb.AttributeValue{}
 
+			for _,equi := range object.RoleEntity.Equivalences {
+				equivalenceArr = append(equivalenceArr, &dynamodb.AttributeValue{
+					S: aws.String(equi),
+				})
+			}
 
 			input := &dynamodb.UpdateItemInput{
 				ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
@@ -529,6 +553,9 @@ func handler(ctx context.Context, e UpdateEvent)(bool, error) {
 					},
 					":value": {
 						S: aws.String(object.RoleEntity.Value),
+					},
+					":equivalence": {
+						L: equivalenceArr,
 					},
 					
 				},
@@ -547,7 +574,7 @@ func handler(ctx context.Context, e UpdateEvent)(bool, error) {
 				},
 				ReturnValues:     aws.String("UPDATED_NEW"),
 				TableName:        aws.String(TABLENAME),
-				UpdateExpression: aws.String("SET #attribute = :attribute, description = :description, origin = :origin, #value = :value"),
+				UpdateExpression: aws.String("SET #attribute = :attribute, description = :description, origin = :origin, #value = :value , equivalence = :equivalence"),
 			}
 
 			_, err := svc.UpdateItem(input)
@@ -555,7 +582,14 @@ func handler(ctx context.Context, e UpdateEvent)(bool, error) {
 				panic(fmt.Sprintf("failed to update item, %v", err))
 			}
 		} else if object.DataObject == "entityPolicy" {
-			
+			equivalenceArr := []*dynamodb.AttributeValue{}
+
+			for _,equi := range object.PolicyEntity.Equivalences {
+				equivalenceArr = append(equivalenceArr, &dynamodb.AttributeValue{
+					S: aws.String(equi),
+				})
+			}
+
 			input := &dynamodb.UpdateItemInput{
 				ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 
@@ -570,6 +604,9 @@ func handler(ctx context.Context, e UpdateEvent)(bool, error) {
 					},
 					":value": {
 						S: aws.String(object.PolicyEntity.Value),
+					},
+					":equivalence": {
+						L: equivalenceArr,
 					},
 				},
 				ExpressionAttributeNames: map[string]*string{
@@ -587,7 +624,7 @@ func handler(ctx context.Context, e UpdateEvent)(bool, error) {
 				},
 				ReturnValues:     aws.String("UPDATED_NEW"),
 				TableName:        aws.String(TABLENAME),
-				UpdateExpression: aws.String("SET #attribute = :attribute, description = :description, origin = :origin, #value = :value"),
+				UpdateExpression: aws.String("SET #attribute = :attribute, description = :description, origin = :origin, #value = :value , equivalence = :equivalence"),
 			}
 
 			_, err := svc.UpdateItem(input)
@@ -595,7 +632,13 @@ func handler(ctx context.Context, e UpdateEvent)(bool, error) {
 				panic(fmt.Sprintf("failed to update item, %v", err))
 			}
 		} else if object.DataObject == "entityCredit" {
-		
+			equivalenceArr := []*dynamodb.AttributeValue{}
+
+			for _,equi := range object.CreditEntity.Equivalences {
+				equivalenceArr = append(equivalenceArr, &dynamodb.AttributeValue{
+					S: aws.String(equi),
+				})
+			}
 
 			input := &dynamodb.UpdateItemInput{
 				ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
@@ -611,6 +654,9 @@ func handler(ctx context.Context, e UpdateEvent)(bool, error) {
 					},
 					":value": {
 						S: aws.String(object.CreditEntity.Value),
+					},
+					":equivalence": {
+						L: equivalenceArr,
 					},
 				},
 				ExpressionAttributeNames: map[string]*string{
@@ -628,7 +674,7 @@ func handler(ctx context.Context, e UpdateEvent)(bool, error) {
 				},
 				ReturnValues:     aws.String("UPDATED_NEW"),
 				TableName:        aws.String(TABLENAME),
-				UpdateExpression: aws.String("SET #attribute = :attribute, description = :description, origin = :origin, #value = :value"),
+				UpdateExpression: aws.String("SET #attribute = :attribute, description = :description, origin = :origin, #value = :value , equivalence = :equivalence"),
 			}
 
 			_, err := svc.UpdateItem(input)

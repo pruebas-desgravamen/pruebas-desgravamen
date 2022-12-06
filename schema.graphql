@@ -98,6 +98,7 @@ input EntityInput{
   description: String!
   origin: String!
   value: String!
+  equivalence:[String]!
 }
 
 
@@ -235,7 +236,7 @@ type Mutation {
   
   storeStructure(event: StructureInput!): Boolean #store
   # # validations(validations: InputValidations ): String
-  # deleteStructure(structureId:String!):Boolean # falta eliminar una estructura
+  deleteStructure(structureId:String!):Boolean # falta eliminar una estructura
   activeStructure(structureId: Int, state:Boolean):Boolean # falta activar o desactivar una estructura
   # # cloneStructure(???): Boolean # falta clonar una estructura
   updateStructure(event: UpdateStructureInput!): Boolean # falta actualizar una estructura
@@ -273,6 +274,24 @@ type GetStructureContractorOutput{
   nPolicy: [String]
 }
 
+type Details{
+  structureName: String!
+  transaction: String!
+  branch: String!
+  header: String!
+  certificateByRole: String!
+  rowsOrderByRole: String!
+  fileFormat: String!
+  dateFormat: String!
+  state: String!
+}
+
+type AllStructuresOutput{
+  items: [Details]
+  nextToken: String
+}
+
+
 
 type Query{
 
@@ -280,7 +299,7 @@ type Query{
   ####################ESTRUCTURAS######################
   #####################################################
   getStructure(structureId:String!):Structure  # falta obtener una estructura
-  # getAllStructures: [Structure]    # listar estructuras posiblemente?
+  getAllStructures(nextToken:String, limit:Int): AllStructuresOutput    # listar estructuras posiblemente?
 
   #####################################################
   ###################CARGA MASIVA######################
