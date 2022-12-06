@@ -617,7 +617,7 @@ Resources:
   ActiveStructureStateMachine:
     Type: AWS::Serverless::StateMachine
     Properties:
-      DefinitionUri: statemachines/activeStructure.asl.json
+      DefinitionUri: statemachines/active_structure.asl.json
       Type: EXPRESS
       Name: ActiveStructureStateMachine
       DefinitionSubstitutions:
@@ -638,7 +638,7 @@ Resources:
   DeleteStructureStateMachine:
     Type: AWS::Serverless::StateMachine
     Properties:
-      DefinitionUri: statemachines/deleteStructure.asl.json
+      DefinitionUri: statemachines/delete_structure.asl.json
       Type: EXPRESS
       Name: DeleteStructureStateMachine
       DefinitionSubstitutions:
