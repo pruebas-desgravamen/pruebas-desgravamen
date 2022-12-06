@@ -101,6 +101,7 @@ input EntityInput{
   equivalence:[String]!
 }
 
+# ["masculino:1","femenino:2"]
 
 input StructureInput {
   #Datos Generales
@@ -140,6 +141,7 @@ enum Operation{
 input UpdateObject{
   op: Operation
   dataObject: String
+  #detail, policy, attribute, entityClient, entityCertificate, entityRole, entityPolicy, entityCredit
 
   structureName: String
   transaction: String
@@ -192,6 +194,19 @@ type Atribute{
   domain: [String]!
 }
 
+# Valores posibles
+# "3,5,6"
+
+# Valor Maximo
+# "3"
+
+# Validar Nul
+
+#[Valores posibles, Valor Maximo, Validar Nul]
+
+#[origen1, origen2, origen3]
+
+#[argumento1,argumento2,""]
 
 type Entity{
   attribute: String!
@@ -238,7 +253,6 @@ type Mutation {
   # # validations(validations: InputValidations ): String
   deleteStructure(structureId:String!):Boolean # falta eliminar una estructura
   activeStructure(structureId: Int, state:Boolean):Boolean # falta activar o desactivar una estructura
-  # # cloneStructure(???): Boolean # falta clonar una estructura
   updateStructure(event: UpdateStructureInput!): Boolean # falta actualizar una estructura
 
   #####################################################
